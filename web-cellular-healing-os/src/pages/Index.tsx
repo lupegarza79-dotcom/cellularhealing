@@ -24,11 +24,14 @@ import {
   Repeat,
   Scissors,
   SkipForward,
-  Check,
   X,
   BookOpen,
   Wand2,
   ShieldCheck,
+  HelpCircle,
+  ArrowDown,
+  RotateCw,
+  Move,
 } from "lucide-react";
 
 /* =========================================================================
@@ -809,7 +812,7 @@ export default function Index() {
   return (
     <div className="min-h-screen cho-bg relative overflow-hidden text-foreground">
       <div className="cho-stars absolute inset-0 pointer-events-none" />
-      <TopBar
+      {screen !== "session" && <TopBar
         screen={screen}
         ambient={ambient}
         voice={voice}
@@ -822,9 +825,9 @@ export default function Index() {
           else if (screen === "session") setScreen("tutorial");
           else if (screen === "complete") setScreen("welcome");
         }}
-      />
+      />}
 
-      <main className="relative max-w-md mx-auto px-5 pb-24 pt-2">
+      <main className={`relative ${screen === "session" ? "" : "max-w-md mx-auto px-5 pb-24 pt-2"}`}>
         {screen === "welcome" && (
           <Welcome
             mode={mode}
@@ -865,9 +868,13 @@ export default function Index() {
             recipientName={recipientName || "you"}
             mode={mode}
             voice={voice}
+            ambient={ambient}
+            toggleAmbient={() => setAmbient((v) => !v)}
+            toggleVoice={() => setVoice((v) => !v)}
             installedQualities={installedQualities}
             setInstalledQualities={setInstalledQualities}
             onComplete={() => setScreen("complete")}
+            onExit={() => setScreen("tutorial")}
           />
         )}
         {screen === "complete" && protocol && (
@@ -1462,62 +1469,71 @@ function ProxyCellVisual({
    SESSION TRAINER
    ---------------------------------------------------------------------------- */
 
+/* ----- Movement micro-icon ----- */
+function MovementIcon({ m, size = 12 }: { m: MovementKind; size?: number }) {
+  if (m === "sweep-down") return <ArrowDown size={size} />;
+  if (m === "circle-cw") return <RotateCw size={size} />;
+  if (m === "beam-in") return <Zap size={size} />;
+  if (m === "pulse") return <Activity size={size} />;
+  if (m === "alternate") return <Move size={size} />;
+  return <Sparkles size={size} />;
+}
+
 function SessionTrainer({
   protocol,
   recipientName,
   mode,
   voice,
+  ambient,
+  toggleAmbient,
+  toggleVoice,
   installedQualities,
   setInstalledQualities,
   onComplete,
+  onExit,
 }: {
   protocol: Protocol;
   recipientName: string;
   mode: AppMode;
   voice: boolean;
+  ambient: boolean;
+  toggleAmbient: () => void;
+  toggleVoice: () => void;
   installedQualities: string[];
   setInstalledQualities: (q: string[]) => void;
   onComplete: () => void;
+  onExit: () => void;
 }) {
   const steps = useMemo(() => protocol.buildSteps(), [protocol]);
   const [stepIdx, setStepIdx] = useState(0);
   const [running, setRunning] = useState(mode === "guided");
   const [elapsed, setElapsed] = useState(0);
-  const [showWhy, setShowWhy] = useState(false);
   const [reminderPulse, setReminderPulse] = useState(false);
+  const [sheet, setSheet] = useState<null | "why" | "install">(null);
   const step = steps[stepIdx];
 
   const proxyStatement = `This cell represents all the cells of the ${protocol.systemPhrase} of ${recipientName}, wherever affected.`;
 
-  // speak step
   useEffect(() => {
     setElapsed(0);
-    setShowWhy(false);
+    setSheet(null);
     speak(step.voice, voice);
   }, [stepIdx, step.voice, voice]);
 
-  // timer
   useEffect(() => {
     if (!running) return;
-    const t = setInterval(() => {
-      setElapsed((e) => e + 1);
-    }, 1000);
+    const t = setInterval(() => setElapsed((e) => e + 1), 1000);
     return () => clearInterval(t);
   }, [running]);
 
-  // step auto-advance
   useEffect(() => {
     if (mode === "practitioner") return;
     if (elapsed >= step.duration) {
-      if (stepIdx < steps.length - 1) {
-        setStepIdx((i) => i + 1);
-      } else {
-        onComplete();
-      }
+      if (stepIdx < steps.length - 1) setStepIdx((i) => i + 1);
+      else onComplete();
     }
   }, [elapsed, step.duration, stepIdx, steps.length, onComplete, mode]);
 
-  // 30-second proxy reminder
   useEffect(() => {
     if (elapsed > 0 && elapsed % 30 === 0 && running) {
       setReminderPulse(true);
@@ -1530,223 +1546,265 @@ function SessionTrainer({
 
   const pct = Math.min(100, (elapsed / step.duration) * 100);
   const remaining = Math.max(0, step.duration - elapsed);
+  const cc = colorMap[step.color];
+  const mm = Math.floor(remaining / 60);
+  const ss = remaining % 60;
 
-  const ColorPill = ({ tone }: { tone: ColorTone }) => {
-    const cc = colorMap[tone];
-    return (
-      <div
-        className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] border border-white/10"
-        style={{
-          background: `linear-gradient(90deg, ${cc.from}22, ${cc.to}22)`,
-        }}
-      >
-        <span
-          className="w-2.5 h-2.5 rounded-full"
-          style={{ background: `linear-gradient(135deg, ${cc.from}, ${cc.to})` }}
-        />
-        {cc.label}
-      </div>
-    );
-  };
-
+  // Compact, fixed-viewport, no-scroll trainer
   return (
-    <section className="anim-fade-up pt-2">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-3">
-        <div>
-          <div className="text-[11px] uppercase tracking-[0.22em] text-white/55">
-            {protocol.name} · for {recipientName}
+    <div className="fixed inset-0 z-40 flex flex-col cho-bg overflow-hidden">
+      <div className="cho-stars absolute inset-0 pointer-events-none" />
+
+      {/* TOP BAR */}
+      <div className="relative flex items-center gap-2 px-4 pt-[max(env(safe-area-inset-top),12px)] pb-2">
+        <button onClick={onExit} className="btn-ghost rounded-full p-2" aria-label="Exit">
+          <X size={16} />
+        </button>
+        <div className="min-w-0 flex-1">
+          <div className="text-[10px] uppercase tracking-[0.22em] text-white/55 truncate">
+            {protocol.name}
           </div>
-          <div className="text-white text-sm mt-1">{step.title}</div>
-        </div>
-        <div className="text-right">
-          <div className="text-[10px] uppercase tracking-wider text-white/45">step</div>
-          <div className="text-sm text-white/85">{stepIdx + 1}/{steps.length}</div>
-        </div>
-      </div>
-
-      {/* Step progress dots */}
-      <div className="flex gap-1 mb-4">
-        {steps.map((_, i) => (
-          <div
-            key={i}
-            className={`h-1 flex-1 rounded-full transition-all ${
-              i < stepIdx ? "bg-white/55" : i === stepIdx ? "bg-amber-300/90" : "bg-white/12"
-            }`}
-          />
-        ))}
-      </div>
-
-      {/* Main visual */}
-      <div className="glass rounded-3xl p-5 relative overflow-hidden">
-        <div className="h-72 relative">
-          <ProxyCellVisual
-            color={step.color}
-            movement={step.movement}
-            showCrystal={true}
-            label={`proxy · ${step.body}`}
-            intensity={reminderPulse ? 1.5 : 1}
-          />
-          {reminderPulse && (
-            <div className="absolute inset-0 flex items-end justify-center pb-2 pointer-events-none">
-              <div className="text-[11px] uppercase tracking-[0.2em] text-amber-200/90 px-3 py-1 rounded-full bg-amber-300/10 border border-amber-300/20 flex items-center gap-1.5">
-                <Repeat size={11} /> Repeat proxy statement
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* timer ring & color */}
-        <div className="mt-3 flex items-center gap-3">
-          <ColorPill tone={step.color} />
-          <div className="ml-auto text-right">
-            <div className="text-2xl tabular-nums gold-text font-semibold leading-none">
-              {String(Math.floor(remaining / 60)).padStart(1, "0")}:{String(remaining % 60).padStart(2, "0")}
-            </div>
-            <div className="text-[10px] text-white/45 mt-0.5">remaining</div>
+          <div className="text-[13px] text-white/90 truncate -mt-0.5">
+            for {recipientName} · step {stepIdx + 1}/{steps.length}
           </div>
         </div>
+        <div
+          className={`text-right tabular-nums leading-none ${reminderPulse ? "animate-pulse" : ""}`}
+        >
+          <div className="text-2xl font-semibold gold-text">
+            {mm}:{String(ss).padStart(2, "0")}
+          </div>
+          <div className="text-[9px] text-white/45 uppercase tracking-wider mt-0.5">
+            remaining
+          </div>
+        </div>
+        <button onClick={toggleAmbient} className="btn-ghost rounded-full p-2" aria-label="Ambient">
+          {ambient ? <Volume2 size={14} /> : <VolumeX size={14} />}
+        </button>
+        <button onClick={toggleVoice} className="btn-ghost rounded-full p-2" aria-label="Voice">
+          {voice ? <Mic size={14} /> : <MicOff size={14} />}
+        </button>
+      </div>
 
-        <div className="progress-track h-1.5 rounded-full mt-3 overflow-hidden">
+      {/* Step progress bar */}
+      <div className="px-4">
+        <div className="flex gap-1">
+          {steps.map((_, i) => (
+            <div
+              key={i}
+              className={`h-1 flex-1 rounded-full transition-all ${
+                i < stepIdx
+                  ? "bg-white/50"
+                  : i === stepIdx
+                  ? "bg-amber-300/90"
+                  : "bg-white/10"
+              }`}
+            />
+          ))}
+        </div>
+        <div className="progress-track h-1 rounded-full mt-1.5 overflow-hidden">
           <div className="progress-fill h-full" style={{ width: `${pct}%` }} />
         </div>
       </div>
 
-      {/* Instruction card */}
-      <div className="glass rounded-3xl mt-4 p-4">
-        <div className="text-[10px] uppercase tracking-[0.2em] text-white/55">What to do now</div>
-        <div className="text-white/90 text-[14px] mt-2 leading-relaxed">{step.instruction}</div>
-        <div className="text-white/55 text-[12px] mt-2 italic">
-          Movement: {movementLabel[step.movement]}.
-        </div>
-        {step.note && (
-          <div className="text-amber-200/80 text-[11px] mt-2 flex items-start gap-1">
-            <ShieldCheck size={12} className="mt-0.5" />
-            {step.note}
-          </div>
-        )}
-      </div>
+      {/* CENTER (≈70%) — hand + proxy cell + crystal */}
+      <div className="relative flex-1 min-h-0 flex items-center justify-center px-4">
+        <div className="relative w-full h-full max-h-[62vh] flex items-center justify-center">
+          <ProxyCellVisual
+            color={step.color}
+            movement={step.movement}
+            showCrystal={true}
+            intensity={reminderPulse ? 1.5 : 1}
+          />
 
-      {/* Proxy statement card */}
-      <div className="glass rounded-3xl mt-3 p-4">
-        <div className="flex items-center justify-between">
-          <div className="text-[10px] uppercase tracking-[0.2em] text-white/55">Say now</div>
-          <button
-            onClick={() => {
-              chime();
-              speak(proxyStatement, voice);
-            }}
-            className="btn-ghost rounded-full px-3 py-1 text-[11px] flex items-center gap-1"
-          >
-            <Repeat size={11} /> Replay
-          </button>
-        </div>
-        <div className="text-white/90 text-[13px] mt-2 leading-relaxed">
-          "{proxyStatement}"
-        </div>
-        <div className="text-white/45 text-[11px] mt-2">
-          Repeat every 30 seconds (you will be reminded).
-        </div>
-      </div>
+          {/* Color + movement pills, anchored top-left */}
+          <div className="absolute top-1 left-1 flex flex-col gap-1.5">
+            <div
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] border border-white/10 backdrop-blur"
+              style={{ background: `linear-gradient(90deg, ${cc.from}22, ${cc.to}22)` }}
+            >
+              <span
+                className="w-2.5 h-2.5 rounded-full"
+                style={{ background: `linear-gradient(135deg, ${cc.from}, ${cc.to})` }}
+              />
+              <span className="text-white/90">{cc.label}</span>
+            </div>
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] bg-white/5 border border-white/10 backdrop-blur text-white/75">
+              <MovementIcon m={step.movement} />
+              <span className="capitalize">{step.movement.replace("-", " ")}</span>
+            </div>
+          </div>
 
-      {/* Install qualities */}
-      {step.kind === "install" && (
-        <div className="glass rounded-3xl mt-3 p-4">
-          <div className="text-[10px] uppercase tracking-[0.2em] text-white/55 mb-2">
-            Choose 1–3 qualities to install
+          {/* Step title pill, anchored top-right */}
+          <div className="absolute top-1 right-1 px-2.5 py-1 rounded-full text-[11px] bg-white/5 border border-white/10 backdrop-blur text-white/85">
+            {step.title}
           </div>
-          <div className="flex flex-wrap gap-2">
-            {QUALITIES.map((q) => {
-              const active = installedQualities.includes(q);
-              return (
-                <button
-                  key={q}
-                  onClick={() => {
-                    if (active) setInstalledQualities(installedQualities.filter((x) => x !== q));
-                    else if (installedQualities.length < 3)
-                      setInstalledQualities([...installedQualities, q]);
-                  }}
-                  className={`px-3 py-1.5 rounded-full text-[12px] border transition ${
-                    active
-                      ? "bg-amber-300/15 border-amber-300/35 text-amber-100"
-                      : "bg-white/4 border-white/10 text-white/70"
-                  }`}
-                >
-                  {q}
-                </button>
-              );
-            })}
-          </div>
-          {installedQualities.length > 0 && (
-            <div className="text-amber-100/80 text-[12px] mt-3">
-              May the body be filled with {installedQualities.join(", ")}.
+
+          {/* 30s reminder banner */}
+          {reminderPulse && (
+            <div className="absolute bottom-1 left-1/2 -translate-x-1/2">
+              <div className="text-[11px] uppercase tracking-[0.2em] text-amber-200/95 px-3 py-1 rounded-full bg-amber-300/10 border border-amber-300/30 flex items-center gap-1.5">
+                <Repeat size={11} /> Repeat now
+              </div>
             </div>
           )}
         </div>
-      )}
+      </div>
 
-      {/* Why this matters */}
-      <button
-        onClick={() => setShowWhy((s) => !s)}
-        className="w-full glass rounded-2xl mt-3 p-3 text-left flex items-start gap-2"
-      >
-        <BookOpen size={14} className="mt-0.5 text-white/55" />
-        <div className="flex-1">
-          <div className="text-[11px] uppercase tracking-[0.18em] text-white/55">Why this matters</div>
-          {showWhy && (
-            <div className="text-white/75 text-[12px] mt-1.5 leading-relaxed">{step.purpose}</div>
+      {/* BOTTOM (≈30%) — phrase + action + controls */}
+      <div className="relative px-4 pb-[max(env(safe-area-inset-bottom),12px)]">
+        {/* Proxy statement */}
+        <div className="glass rounded-2xl px-4 py-3">
+          <div className="flex items-center justify-between">
+            <div className="text-[9px] uppercase tracking-[0.22em] text-white/55">Say now</div>
+            <button
+              onClick={() => {
+                chime();
+                speak(proxyStatement, voice);
+              }}
+              className="text-white/55 hover:text-white/85"
+              aria-label="Replay"
+            >
+              <Repeat size={12} />
+            </button>
+          </div>
+          <div className="text-white/95 text-[13px] mt-1 leading-snug line-clamp-2">
+            "This cell represents all the cells of the {protocol.systemPhrase} of {recipientName}, wherever affected."
+          </div>
+        </div>
+
+        {/* One short action */}
+        <div className="mt-2 px-1 text-center">
+          <div className="text-[9px] uppercase tracking-[0.22em] text-white/45">
+            Action
+          </div>
+          <div className="text-white/95 text-[13px] mt-0.5 leading-snug line-clamp-2">
+            {step.instruction.replace(/^.*?[.!?]\s/, "").length > 10 && step.instruction.split(". ").length > 1
+              ? step.instruction.split(". ").slice(-1)[0]
+              : step.instruction}
+          </div>
+        </div>
+
+        {/* Controls */}
+        <div className="mt-3 flex items-center gap-2">
+          <button
+            onClick={() => setSheet("why")}
+            className="btn-ghost rounded-full px-3 py-2 text-[11px] flex items-center gap-1.5"
+          >
+            <HelpCircle size={12} /> Why?
+          </button>
+          {step.kind === "install" && (
+            <button
+              onClick={() => setSheet("install")}
+              className="btn-ghost rounded-full px-3 py-2 text-[11px] flex items-center gap-1.5"
+            >
+              <Sparkles size={12} /> Qualities
+              {installedQualities.length > 0 && (
+                <span className="ml-1 px-1.5 rounded-full bg-amber-300/20 text-amber-100 text-[10px]">
+                  {installedQualities.length}
+                </span>
+              )}
+            </button>
           )}
-        </div>
-      </button>
-
-      {/* Sensations hint */}
-      <div className="glass rounded-2xl mt-3 p-3">
-        <div className="text-[11px] uppercase tracking-[0.18em] text-white/55 mb-1">How do I know it's working?</div>
-        <div className="text-white/65 text-[12px] leading-relaxed">
-          Possible: warmth, tingling, lightness, yawning, emotional release, subtle calm. If you feel nothing, continue calmly — not everyone feels immediately.
+          <button
+            onClick={() => setRunning((r) => !r)}
+            className="btn-gold ml-auto rounded-full w-12 h-12 flex items-center justify-center"
+            aria-label={running ? "Pause" : "Resume"}
+          >
+            {running ? <Pause size={18} /> : <Play size={18} />}
+          </button>
+          <button
+            onClick={() => {
+              if (stepIdx < steps.length - 1) setStepIdx((i) => i + 1);
+              else onComplete();
+            }}
+            className="btn-ghost rounded-full px-3 py-2 text-[11px] flex items-center gap-1.5"
+            aria-label="Skip"
+          >
+            <SkipForward size={12} /> Skip
+          </button>
         </div>
       </div>
 
-      {/* Controls */}
-      <div className="grid grid-cols-3 gap-2 mt-5">
+      {/* SHEETS (progressive disclosure) */}
+      {sheet && (
         <button
-          onClick={() => setRunning((r) => !r)}
-          className="btn-ghost rounded-2xl py-3 text-sm flex items-center justify-center gap-1.5"
-        >
-          {running ? <><Pause size={14} /> Pause</> : <><Play size={14} /> Resume</>}
-        </button>
-        <button
-          onClick={() => {
-            setElapsed(0);
-            speak(step.voice, voice);
-          }}
-          className="btn-ghost rounded-2xl py-3 text-sm flex items-center justify-center gap-1.5"
-        >
-          <RotateCcw size={14} /> Restart
-        </button>
-        <button
-          onClick={() => {
-            if (stepIdx < steps.length - 1) setStepIdx((i) => i + 1);
-            else onComplete();
-          }}
-          className="btn-ghost rounded-2xl py-3 text-sm flex items-center justify-center gap-1.5"
-        >
-          <SkipForward size={14} /> Skip
-        </button>
-      </div>
-
-      {mode === "practitioner" && (
-        <button
-          onClick={() => {
-            if (stepIdx < steps.length - 1) setStepIdx((i) => i + 1);
-            else onComplete();
-          }}
-          className="btn-gold w-full rounded-2xl py-3 mt-3 text-sm font-medium flex items-center justify-center gap-2"
-        >
-          <Check size={14} /> Mark complete · next step
-        </button>
+          aria-label="Close"
+          onClick={() => setSheet(null)}
+          className="absolute inset-0 bg-black/55 backdrop-blur-sm z-50"
+        />
       )}
-    </section>
+      {sheet === "why" && (
+        <div className="absolute left-0 right-0 bottom-0 z-50 anim-fade-up">
+          <div className="glass rounded-t-3xl border-t border-white/10 p-5 pb-[max(env(safe-area-inset-bottom),20px)]">
+            <div className="w-10 h-1 bg-white/15 rounded-full mx-auto mb-3" />
+            <div className="text-[10px] uppercase tracking-[0.22em] text-white/55">Why this step</div>
+            <div className="text-white/95 text-sm mt-1.5 leading-relaxed">{step.purpose}</div>
+            <div className="text-white/65 text-[12px] mt-3 leading-relaxed">
+              Movement: {movementLabel[step.movement]}.
+            </div>
+            {step.note && (
+              <div className="text-amber-200/85 text-[11px] mt-3 flex items-start gap-1.5">
+                <ShieldCheck size={12} className="mt-0.5" />
+                <span>{step.note}</span>
+              </div>
+            )}
+            <div className="text-white/55 text-[11px] mt-3 leading-relaxed">
+              Possible sensations: warmth, tingling, lightness, yawning, emotional release, subtle calm. If nothing yet — continue calmly.
+            </div>
+            <button
+              onClick={() => setSheet(null)}
+              className="btn-ghost w-full rounded-2xl py-2.5 mt-4 text-sm"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+      {sheet === "install" && (
+        <div className="absolute left-0 right-0 bottom-0 z-50 anim-fade-up">
+          <div className="glass rounded-t-3xl border-t border-white/10 p-5 pb-[max(env(safe-area-inset-bottom),20px)]">
+            <div className="w-10 h-1 bg-white/15 rounded-full mx-auto mb-3" />
+            <div className="text-[10px] uppercase tracking-[0.22em] text-white/55 mb-2">
+              Choose 1–3 qualities to install
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {QUALITIES.map((q) => {
+                const active = installedQualities.includes(q);
+                return (
+                  <button
+                    key={q}
+                    onClick={() => {
+                      if (active) setInstalledQualities(installedQualities.filter((x) => x !== q));
+                      else if (installedQualities.length < 3)
+                        setInstalledQualities([...installedQualities, q]);
+                    }}
+                    className={`px-3 py-1.5 rounded-full text-[12px] border transition ${
+                      active
+                        ? "bg-amber-300/15 border-amber-300/35 text-amber-100"
+                        : "bg-white/4 border-white/10 text-white/70"
+                    }`}
+                  >
+                    {q}
+                  </button>
+                );
+              })}
+            </div>
+            {installedQualities.length > 0 && (
+              <div className="text-amber-100/85 text-[12px] mt-3">
+                May the body be filled with {installedQualities.join(", ")}.
+              </div>
+            )}
+            <button
+              onClick={() => setSheet(null)}
+              className="btn-gold w-full rounded-2xl py-2.5 mt-4 text-sm font-medium"
+            >
+              Done
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 
