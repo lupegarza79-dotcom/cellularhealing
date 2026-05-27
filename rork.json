@@ -1,0 +1,10 @@
+{
+  "apps": [
+    {
+      "name": "Cellular Healing OS",
+      "path": "web-cellular-healing-os",
+      "framework": "web"
+    }
+  ],
+  "$schema": "https://rork.com/schema/rork.json"
+}
