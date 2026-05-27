@@ -412,6 +412,65 @@
 }
 .label-fade { animation: labelFade 4s ease-in-out infinite; }
 
+/* ---------- Asset-based crystal animations (relative to wrapper) ---------- */
+
+@keyframes assetCrystalHold {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2%); }
+}
+.crystal-hold-asset {
+  animation: assetCrystalHold 3.8s ease-in-out infinite;
+  transform-origin: 50% 100%;
+}
+
+@keyframes assetCrystalSweep {
+  0%, 100% { transform: translateY(-6%) rotate(-2deg); }
+  50% { transform: translateY(10%) rotate(3deg); }
+}
+.crystal-sweep-asset {
+  animation: assetCrystalSweep 2.6s ease-in-out infinite;
+  transform-origin: 50% 100%;
+}
+
+@keyframes assetCrystalOrbit {
+  0%   { transform: translate(0, 0) rotate(0deg); }
+  25%  { transform: translate(4%, -3%) rotate(6deg); }
+  50%  { transform: translate(0, -6%) rotate(0deg); }
+  75%  { transform: translate(-4%, -3%) rotate(-6deg); }
+  100% { transform: translate(0, 0) rotate(0deg); }
+}
+.crystal-orbit-asset {
+  animation: assetCrystalOrbit 5s linear infinite;
+  transform-origin: 50% 100%;
+}
+
+@keyframes assetCrystalPulse {
+  0%, 100% { transform: scale(1); filter: brightness(1); }
+  50% { transform: scale(1.08); filter: brightness(1.18); }
+}
+.crystal-pulse-asset {
+  animation: assetCrystalPulse 1.8s ease-in-out infinite;
+  transform-origin: 50% 100%;
+}
+
+@keyframes assetCrystalAlternate {
+  0%, 100% { transform: translateX(-9%) rotate(-4deg); }
+  50% { transform: translateX(7%) rotate(4deg); }
+}
+.crystal-alternate-asset {
+  animation: assetCrystalAlternate 3s ease-in-out infinite;
+  transform-origin: 50% 100%;
+}
+
+@keyframes assetCrystalExpand {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+.crystal-expand-asset {
+  animation: assetCrystalExpand 4s ease-in-out infinite;
+  transform-origin: 50% 100%;
+}
+
 /* Scrollbar */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }

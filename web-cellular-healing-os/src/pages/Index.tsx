@@ -87,6 +87,8 @@ type Step = {
   title: string;
   purpose: string;
   instruction: string;
+  /** Single-line action shown on the practice screen. */
+  shortAction: string;
   voice: string;
   color: ColorTone;
   movement: MovementKind;
@@ -94,6 +96,10 @@ type Step = {
   body: string; // body region for proxy label
   note?: string;
 };
+
+/* Hand + crystal asset URLs (transparent PNGs) */
+const HAND_IMG = "https://r2-pub.rork.com/generated-images/557220a3-829c-48c0-965a-3412d1698321.png";
+const CRYSTAL_IMG = "https://r2-pub.rork.com/generated-images/35ad291e-3f48-41be-a237-ffe6a6fdabce.png";
 
 type Protocol = {
   id: ProtocolId;
@@ -138,6 +144,7 @@ const baseDisconnect = (body: string, system: string): Step => ({
   title: "Disconnect",
   purpose: "Release energetic cords, projections, and stress that don't belong.",
   instruction: `Hold the proxy cell. Say firmly: "Disconnect all unwanted and unauthorized connections to the ${system}. Cut now."`,
+  shortAction: "Sweep the crystal downward through the proxy cell.",
   voice: `Disconnect all unwanted connections to the ${system}. Cut now.`,
   color: "violet",
   movement: "sweep-down",
@@ -151,6 +158,7 @@ const baseStabilize = (body: string): Step => ({
   title: "Stabilize with Gold",
   purpose: "Seal and stabilize after cleansing.",
   instruction: "Hold the crystal steady. Visualize gold sunlight infusing the proxy cell.",
+  shortAction: "Hold steady — beam Gold into the proxy cell.",
   voice: "Stabilize with gold. Allow the system to settle.",
   color: "gold",
   movement: "beam-in",
@@ -182,6 +190,7 @@ const PROTOCOLS: Protocol[] = [
         title: "Cleanse — Green + Violet",
         purpose: "Sweep heaviness from every system of the body.",
         instruction: "Move the crystal in gentle clockwise circles. Imagine Green + Violet light washing through the proxy cell. Exclude the eyes.",
+        shortAction: "Small clockwise circles around the proxy cell.",
         voice: "Apply Green and Violet to the proxy cell. Exclude the eyes.",
         color: "green-violet",
         movement: "circle-cw",
@@ -195,6 +204,7 @@ const PROTOCOLS: Protocol[] = [
         title: "Energize — Gold",
         purpose: "Restore every cell with golden light.",
         instruction: "Hold the crystal steady. Project Gold light into the proxy cell.",
+        shortAction: "Hold steady — project Gold into the proxy cell.",
         voice: "Energize with gold. Every cell receives golden restorative energy.",
         color: "gold",
         movement: "beam-in",
@@ -207,6 +217,7 @@ const PROTOCOLS: Protocol[] = [
         title: "Golden Sun Integration",
         purpose: "Seal and shine like a golden sun.",
         instruction: "Expand the gold light outward from the proxy cell. See yourself shining like the golden sun.",
+        shortAction: "Expand the Gold light outward in slow waves.",
         voice: "See yourself shining like the golden sun. Allow the body to receive what it needs.",
         color: "gold",
         movement: "expand",
@@ -237,6 +248,7 @@ const PROTOCOLS: Protocol[] = [
         title: "Cleanse — Electric Violet",
         purpose: "Clear heaviness from the nerves.",
         instruction: "Tiny gentle pulses of Electric Violet into the proxy cell.",
+        shortAction: "Tiny soft Electric Violet pulses near the proxy cell.",
         voice: "Apply Electric Violet to the proxy cell. Let the nervous system receive gently.",
         color: "violet",
         movement: "pulse",
@@ -249,6 +261,7 @@ const PROTOCOLS: Protocol[] = [
         title: "Energize — Electric Violet",
         purpose: "Restore nerve flow.",
         instruction: "Hold the crystal steady. Beam Electric Violet softly.",
+        shortAction: "Hold steady — beam Electric Violet gently.",
         voice: "Energize the nervous system with Electric Violet. Do not force.",
         color: "violet",
         movement: "beam-in",
@@ -278,6 +291,7 @@ const PROTOCOLS: Protocol[] = [
         title: "Appreciation",
         purpose: "Repair relationship with the body.",
         instruction: "Place hands on heart. Thank the muscles for carrying you.",
+        shortAction: "Speak appreciation inwardly to the muscles.",
         voice: "Thank you muscles and legs for carrying the body. I appreciate you.",
         color: "gold",
         movement: "pulse",
@@ -290,6 +304,7 @@ const PROTOCOLS: Protocol[] = [
         title: "Soothe Pain — Light Blue",
         purpose: "Cool pain sensation energetically.",
         instruction: "Sweep a soft Light Blue wave through the proxy cell.",
+        shortAction: "Sweep a cooling Light Blue wave downward.",
         voice: "Apply Light Blue. Allow the muscles to cool and relax.",
         color: "blue",
         movement: "sweep-down",
@@ -302,6 +317,7 @@ const PROTOCOLS: Protocol[] = [
         title: "Cleanse — Green + Orange",
         purpose: "Clear density from the muscles.",
         instruction: "Alternate Green and Orange waves into the proxy cell.",
+        shortAction: "Alternate Green and Orange waves — one, then the other.",
         voice: "Apply Green and Orange. Clear the heaviness.",
         color: "orange",
         movement: "alternate",
@@ -314,6 +330,7 @@ const PROTOCOLS: Protocol[] = [
         title: "Energize — Green + Orange",
         purpose: "Restore strength and circulation.",
         instruction: "Continue alternating colors, slightly slower now.",
+        shortAction: "Slower alternating Green and Orange waves.",
         voice: "Energize the muscles. Allow strength to return.",
         color: "green",
         movement: "alternate",
@@ -343,6 +360,7 @@ const PROTOCOLS: Protocol[] = [
         title: "L.A.G. — Love, Appreciation, Gratitude",
         purpose: "Shift from criticism into cooperation with the heart.",
         instruction: "Speak inwardly, line by line. Let the heart receive.",
+        shortAction: "Speak L.A.G. inwardly — one line at a time.",
         voice: "Thank you, heart, for beating since the beginning of life. Thank you for circulating blood and oxygen. I am sorry for ignoring you. I appreciate you. I send love, appreciation, and gratitude to every cell.",
         color: "rose-gold",
         movement: "pulse",
@@ -355,6 +373,7 @@ const PROTOCOLS: Protocol[] = [
         title: "Cleanse — Green + Violet",
         purpose: "Release sadness, self-judgment, heaviness.",
         instruction: "Circle Green + Violet gently around the proxy cell of the heart.",
+        shortAction: "Gentle clockwise circles — Green + Violet.",
         voice: "Cleanse the heart with Green and Violet. Release sadness and self judgment.",
         color: "green-violet",
         movement: "circle-cw",
@@ -367,6 +386,7 @@ const PROTOCOLS: Protocol[] = [
         title: "Energize — Gold + Electric Violet",
         purpose: "Fill the heart and cardiovascular field with light.",
         instruction: "Alternate Gold and Electric Violet beams into the proxy cell.",
+        shortAction: "Alternate Gold and Electric Violet beams.",
         voice: "Energize the heart with Gold and Electric Violet.",
         color: "gold",
         movement: "alternate",
@@ -397,6 +417,7 @@ const PROTOCOLS: Protocol[] = [
         title: "Light Blue Coating (Lower GI first)",
         purpose: "Protective coating before deeper clearing.",
         instruction: "Sweep Light Blue along the proxy cell, coating it gently.",
+        shortAction: "Coat the proxy cell with a soft Light Blue sweep.",
         voice: "Apply Light Blue coating first. Protect before clearing.",
         color: "blue",
         movement: "sweep-down",
@@ -409,6 +430,7 @@ const PROTOCOLS: Protocol[] = [
         title: "Cleanse — Green + Orange",
         purpose: "Clear density from upper and lower GI.",
         instruction: "Alternate Green and Orange into the proxy cell.",
+        shortAction: "Alternate Green and Orange waves.",
         voice: "Apply Green and Orange. Clear the digestive system.",
         color: "orange",
         movement: "alternate",
@@ -421,6 +443,7 @@ const PROTOCOLS: Protocol[] = [
         title: "Energize — Green + Orange",
         purpose: "Restore digestive vitality.",
         instruction: "Continue softer waves of Green and Orange.",
+        shortAction: "Softer alternating Green and Orange waves.",
         voice: "Energize the digestive system. Allow restoration.",
         color: "green",
         movement: "alternate",
@@ -454,6 +477,7 @@ const PROTOCOLS: Protocol[] = [
         title: "Appreciation",
         purpose: "Thank the kidneys for supporting vitality.",
         instruction: "Place attention on the kidneys. Speak inwardly.",
+        shortAction: "Thank the kidneys inwardly. Soft gold pulses.",
         voice: "Thank you kidneys for supporting vitality and strength.",
         color: "gold",
         movement: "pulse",
@@ -466,6 +490,7 @@ const PROTOCOLS: Protocol[] = [
         title: "Cleanse — Green + Orange",
         purpose: "Clear density from the urinary system.",
         instruction: "Alternate Green and Orange into the proxy cell.",
+        shortAction: "Alternate Green and Orange waves.",
         voice: "Apply Green and Orange to the kidneys.",
         color: "green",
         movement: "alternate",
@@ -478,6 +503,7 @@ const PROTOCOLS: Protocol[] = [
         title: "Regenerate — Gold",
         purpose: "Restore strength and vitality.",
         instruction: "Beam Gold steadily into the proxy cell.",
+        shortAction: "Hold steady — beam Gold into the proxy cell.",
         voice: "Regenerate the kidneys with gold.",
         color: "gold",
         movement: "beam-in",
@@ -508,6 +534,7 @@ const PROTOCOLS: Protocol[] = [
         title: "Gentle Cleanse — Greenish Gold",
         purpose: "Balance both hemispheres softly.",
         instruction: "Tiny soft pulses of Greenish Gold into the proxy cell.",
+        shortAction: "Tiny soft Greenish Gold pulses.",
         voice: "Apply Greenish Gold gently. Balance right and left hemispheres.",
         color: "greenish-gold",
         movement: "pulse",
@@ -520,6 +547,7 @@ const PROTOCOLS: Protocol[] = [
         title: "Energize — Greenish Gold",
         purpose: "Allow the brain to receive softly.",
         instruction: "Hold the crystal steady. Beam Greenish Gold.",
+        shortAction: "Hold steady — beam Greenish Gold softly.",
         voice: "Allow the brain to receive softly.",
         color: "greenish-gold",
         movement: "beam-in",
@@ -551,6 +579,7 @@ const PROTOCOLS: Protocol[] = [
         title: "Gentle Cleanse — Electric Violet",
         purpose: "Soft clearing for the eyes.",
         instruction: "Tiny violet pulses. Both eyes together. Do not strain.",
+        shortAction: "Tiny Electric Violet pulses — do not strain.",
         voice: "Apply Electric Violet only. Gentle, loving, soft.",
         color: "violet",
         movement: "pulse",
@@ -563,6 +592,7 @@ const PROTOCOLS: Protocol[] = [
         title: "Energize — Electric Violet",
         purpose: "Restore softly.",
         instruction: "Continue soft pulses. Short.",
+        shortAction: "Continue soft violet pulses — keep it short.",
         voice: "Energize the eyes. Stop before overdoing.",
         color: "violet",
         movement: "pulse",
@@ -590,6 +620,7 @@ const PROTOCOLS: Protocol[] = [
         title: "Soothe — Light Blue",
         purpose: "Cool the affected cells.",
         instruction: "Sweep Light Blue through the proxy cell.",
+        shortAction: "Sweep a soothing Light Blue wave through the cell.",
         voice: "Apply Light Blue. Soothe and cool the pain.",
         color: "blue",
         movement: "sweep-down",
@@ -621,6 +652,7 @@ const PROTOCOLS: Protocol[] = [
         title: "Cleanse — Electric Violet",
         purpose: "Remove sadness, fear, anger, inertia, stress.",
         instruction: "Sweep Electric Violet through the proxy cell.",
+        shortAction: "Sweep Electric Violet downward through the cell.",
         voice: "Remove what no longer serves. Apply Electric Violet.",
         color: "violet",
         movement: "sweep-down",
@@ -633,6 +665,7 @@ const PROTOCOLS: Protocol[] = [
         title: "Install Qualities — Gold",
         purpose: "Fill the system with positive qualities.",
         instruction: "Choose qualities, then beam Gold into the proxy cell carrying those qualities.",
+        shortAction: "Beam Gold carrying your chosen qualities into the cell.",
         voice: "Install what supports the soul and body. Fill the system with positive qualities.",
         color: "gold",
         movement: "beam-in",
@@ -1353,382 +1386,400 @@ function ProxyCellVisual({
 }) {
   const c = colorMap[color];
 
-  // Proxy cell position (fixed in viewBox 400x400)
-  const cellX = 215;
-  const cellY = 215;
-  const cellR = 30;
+  // Coordinates as percentages of the container (hand image aspect 768:1207).
+  const cellX = 26; // proxy cell center inside the thumb+index loop
+  const cellY = 19;
+  const tipX = 16; // crystal tip target (just outside the loop, upper-left)
+  const tipY = 17;
 
-  // Crystal tip position — close to but not touching the cell
-  const tipX = 152;
-  const tipY = 165;
+  // Crystal wrapper sits above the loop so the bottom of the crystal image
+  // (the natural tip) lands at (tipX, tipY).
+  const crystalW = 22; // % of container width
+  // crystal image aspect: ~590 / 984 ≈ 0.6  →  wrapper height in container-height %:
+  // crystalW * (1/0.6) * (768/1207) ≈ crystalW * 1.061
+  const crystalH = crystalW * (984 / 590) * (768 / 1207); // ≈ 23.3
+  const crystalLeft = tipX - crystalW / 2;
+  const crystalTop = tipY - crystalH;
 
-  // Crystal motion class (subtle, anchored on its group)
   const crystalMotion =
     movement === "sweep-down"
-      ? "crystal-sweep-axis"
+      ? "crystal-sweep-asset"
       : movement === "circle-cw"
-      ? "crystal-orbit"
+      ? "crystal-orbit-asset"
       : movement === "pulse"
-      ? "crystal-pulse"
+      ? "crystal-pulse-asset"
       : movement === "alternate"
-      ? "crystal-alternate"
-      : "crystal-hold";
+      ? "crystal-alternate-asset"
+      : movement === "expand"
+      ? "crystal-expand-asset"
+      : "crystal-hold-asset";
 
   const uid = color; // unique-ish suffix for gradient ids
 
   return (
-    <div className="relative w-full h-full flex items-center justify-center">
-      {/* outer cinematic aura */}
+    <div className="relative w-full h-full flex items-center justify-center select-none">
       <div
-        className={`absolute rounded-full pointer-events-none ${movement === "expand" ? "expand-aura" : ""}`}
-        style={{
-          width: "82%",
-          maxWidth: 360,
-          aspectRatio: "1 / 1",
-          background: `radial-gradient(circle, ${c.ring} 0%, transparent 70%)`,
-          opacity: 0.55 * intensity,
-          filter: "blur(14px)",
-        }}
-      />
-
-      <svg
-        viewBox="0 0 400 400"
-        className="relative w-full h-full max-w-[420px] max-h-[420px]"
-        aria-hidden
+        className="relative"
+        style={{ aspectRatio: "768 / 1207", height: "100%", maxWidth: "100%" }}
       >
-        <defs>
-          {/* Skin tones — soft, candle-lit */}
-          <linearGradient id={`skin-${uid}`} x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="#f6d4b0" />
-            <stop offset="55%" stopColor="#d9a47a" />
-            <stop offset="100%" stopColor="#8b5a3c" />
-          </linearGradient>
-          <linearGradient id={`skin-shade-${uid}`} x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="rgba(0,0,0,0)" />
-            <stop offset="100%" stopColor="rgba(0,0,0,0.35)" />
-          </linearGradient>
-
-          {/* Proxy cell core */}
-          <radialGradient id={`cellGrad-${uid}`} cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#ffffff" stopOpacity="1" />
-            <stop offset="25%" stopColor={c.from} stopOpacity="1" />
-            <stop offset="70%" stopColor={c.to} stopOpacity="0.85" />
-            <stop offset="100%" stopColor={c.to} stopOpacity="0" />
-          </radialGradient>
-
-          {/* Crystal gradients */}
-          <linearGradient id={`crystalBody-${uid}`} x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="rgba(255,255,255,0.95)" />
-            <stop offset="40%" stopColor="rgba(220,230,245,0.55)" />
-            <stop offset="100%" stopColor="rgba(180,200,230,0.25)" />
-          </linearGradient>
-          <linearGradient id={`crystalTint-${uid}`} x1="0" y1="1" x2="0" y2="0">
-            <stop offset="0%" stopColor={c.from} stopOpacity="0.75" />
-            <stop offset="100%" stopColor={c.to} stopOpacity="0" />
-          </linearGradient>
-
-          {/* Beam gradient (from cell back toward crystal tip) */}
-          <linearGradient
-            id={`beamGrad-${uid}`}
-            x1={tipX}
-            y1={tipY}
-            x2={cellX}
-            y2={cellY}
-            gradientUnits="userSpaceOnUse"
-          >
-            <stop offset="0%" stopColor={c.from} stopOpacity="0.95" />
-            <stop offset="100%" stopColor={c.to} stopOpacity="0.2" />
-          </linearGradient>
-
-          {/* Soft glow filter */}
-          <filter id={`softGlow-${uid}`} x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur stdDeviation="4" result="b" />
-            <feMerge>
-              <feMergeNode in="b" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
-        </defs>
-
-        {/* ============================ HAND ============================ */}
-        {/* Back fingers (middle, ring, pinky) — extending up-right behind the loop */}
-        <g opacity="0.92">
-          <path
-            d="M 238 270 Q 248 215 262 168 Q 272 152 282 162 Q 280 215 268 275 Z"
-            fill={`url(#skin-${uid})`}
-            stroke="rgba(60,30,10,0.25)"
-            strokeWidth="1"
-          />
-          <path
-            d="M 255 275 Q 268 232 282 192 Q 292 180 300 192 Q 295 232 285 282 Z"
-            fill={`url(#skin-${uid})`}
-            stroke="rgba(60,30,10,0.25)"
-            strokeWidth="1"
-          />
-          <path
-            d="M 273 282 Q 285 250 296 218 Q 304 210 310 220 Q 305 252 297 286 Z"
-            fill={`url(#skin-${uid})`}
-            stroke="rgba(60,30,10,0.25)"
-            strokeWidth="1"
-          />
-        </g>
-
-        {/* Palm + wrist */}
-        <path
-          d="M 195 395 L 195 300 Q 195 270 218 262 L 285 270 Q 308 275 312 305 L 312 395 Z"
-          fill={`url(#skin-${uid})`}
-          stroke="rgba(60,30,10,0.25)"
-          strokeWidth="1"
-        />
-        <path
-          d="M 195 395 L 195 300 Q 195 270 218 262 L 285 270 Q 308 275 312 305 L 312 395 Z"
-          fill={`url(#skin-shade-${uid})`}
-          opacity="0.5"
+        {/* outer cinematic aura centered on the proxy cell */}
+        <div
+          className={`absolute pointer-events-none ${movement === "expand" ? "expand-aura" : ""}`}
+          style={{
+            left: `${cellX}%`,
+            top: `${cellY}%`,
+            width: "70%",
+            aspectRatio: "1 / 1",
+            transform: "translate(-50%,-50%)",
+            background: `radial-gradient(circle, ${c.ring} 0%, transparent 70%)`,
+            opacity: 0.65 * intensity,
+            filter: "blur(22px)",
+          }}
         />
 
-        {/* Index finger — forming top of the loop, curving up and around */}
-        <path
-          d="M 232 275 Q 218 235 220 200 Q 226 168 245 158 Q 258 158 256 175 Q 244 195 232 215 Q 224 245 232 275 Z"
-          fill={`url(#skin-${uid})`}
-          stroke="rgba(60,30,10,0.28)"
-          strokeWidth="1"
+        {/* Photographic hand asset (transparent PNG) */}
+        <img
+          src={HAND_IMG}
+          alt=""
+          draggable={false}
+          className="absolute inset-0 w-full h-full object-contain pointer-events-none"
+          style={{ filter: "drop-shadow(0 30px 40px rgba(0,0,0,0.55))" }}
         />
 
-        {/* Thumb — wraps from palm base to meet index tip, forming the bottom of the loop */}
-        <path
-          d="M 200 308 Q 184 280 188 252 Q 200 228 222 218 Q 240 210 250 196 Q 256 180 246 175 Q 230 178 212 198 Q 195 224 184 268 Q 178 290 184 308 Z"
-          fill={`url(#skin-${uid})`}
-          stroke="rgba(60,30,10,0.28)"
-          strokeWidth="1"
-        />
-        {/* Thumb-nail highlight */}
-        <ellipse cx="246" cy="180" rx="6" ry="4" fill="rgba(255,240,220,0.55)" />
-
-        {/* ===================== PROXY CELL ===================== */}
-        {/* outer ring (anatomical marker) */}
-        <circle
-          cx={cellX}
-          cy={cellY}
-          r={cellR + 8}
-          fill="none"
-          stroke={c.from}
-          strokeOpacity="0.35"
-          strokeDasharray="2 4"
-        />
-        {/* glowing cell */}
-        <g style={{ ["--cell-glow" as never]: c.ring } as React.CSSProperties} className="cell-glow">
-          <circle
-            cx={cellX}
-            cy={cellY}
-            r={cellR}
-            fill={`url(#cellGrad-${uid})`}
-            filter={`url(#softGlow-${uid})`}
-          />
-          <circle
-            cx={cellX}
-            cy={cellY}
-            r={cellR}
-            fill="none"
-            stroke="rgba(255,255,255,0.85)"
-            strokeWidth="1"
-            opacity="0.6"
-          />
-          {/* inner highlight */}
-          <ellipse cx={cellX - 8} cy={cellY - 10} rx="10" ry="6" fill="rgba(255,255,255,0.75)" />
-        </g>
-
-        {/* Reminder ring (pulses when intensity is high) */}
-        {intensity > 1.2 && (
-          <circle
-            cx={cellX}
-            cy={cellY}
-            r={cellR}
-            fill="none"
-            stroke={c.from}
-            strokeWidth="2"
-            className="reminder-ring"
-            style={{ transformOrigin: `${cellX}px ${cellY}px` }}
-          />
-        )}
-
-        {/* ===================== MOVEMENT PATH ===================== */}
-        {movement === "sweep-down" && showCrystal && (
-          <g>
-            <line
-              x1={cellX}
-              y1={cellY - 50}
+        {/* SVG overlay — beam, movement paths, labels */}
+        <svg
+          viewBox="0 0 100 100"
+          preserveAspectRatio="none"
+          className="absolute inset-0 w-full h-full pointer-events-none"
+          aria-hidden
+        >
+          <defs>
+            <linearGradient
+              id={`beamGrad-${uid}`}
+              x1={tipX}
+              y1={tipY}
               x2={cellX}
-              y2={cellY + 70}
+              y2={cellY}
+              gradientUnits="userSpaceOnUse"
+            >
+              <stop offset="0%" stopColor={c.from} stopOpacity="0.95" />
+              <stop offset="100%" stopColor={c.to} stopOpacity="0.25" />
+            </linearGradient>
+          </defs>
+
+          {/* Beam from crystal tip into the proxy cell */}
+          {showCrystal && (
+            <g className="beam-glow">
+              <line
+                x1={tipX}
+                y1={tipY}
+                x2={cellX}
+                y2={cellY}
+                stroke={`url(#beamGrad-${uid})`}
+                strokeWidth="3"
+                strokeLinecap="round"
+                opacity="0.55"
+                vectorEffect="non-scaling-stroke"
+                style={{ filter: `drop-shadow(0 0 6px ${c.ring})` }}
+              />
+              <line
+                x1={tipX}
+                y1={tipY}
+                x2={cellX}
+                y2={cellY}
+                stroke={c.from}
+                strokeWidth="1"
+                strokeLinecap="round"
+                className="beam-flow"
+                vectorEffect="non-scaling-stroke"
+                opacity="0.95"
+              />
+            </g>
+          )}
+
+          {/* Movement paths */}
+          {movement === "sweep-down" && showCrystal && (
+            <g vectorEffect="non-scaling-stroke">
+              <line
+                x1={cellX}
+                y1={cellY - 6}
+                x2={cellX}
+                y2={cellY + 22}
+                stroke={c.from}
+                strokeWidth="1.4"
+                opacity="0.75"
+                className="path-sweep"
+                vectorEffect="non-scaling-stroke"
+              />
+              <polygon
+                points={`${cellX - 1.5},${cellY + 20} ${cellX + 1.5},${cellY + 20} ${cellX},${cellY + 24}`}
+                fill={c.from}
+                opacity="0.9"
+              />
+            </g>
+          )}
+          {movement === "circle-cw" && showCrystal && (
+            <ellipse
+              cx={cellX}
+              cy={cellY}
+              rx="11"
+              ry="11"
+              fill="none"
               stroke={c.from}
-              strokeWidth="2"
-              opacity="0.7"
-              className="path-sweep"
+              strokeWidth="1.2"
+              opacity="0.8"
+              className="path-circle"
+              vectorEffect="non-scaling-stroke"
             />
-            <polygon
-              points={`${cellX - 5},${cellY + 64} ${cellX + 5},${cellY + 64} ${cellX},${cellY + 76}`}
-              fill={c.from}
-              opacity="0.85"
-            />
-          </g>
-        )}
-        {movement === "circle-cw" && showCrystal && (
-          <circle
-            cx={cellX}
-            cy={cellY}
-            r={cellR + 22}
-            fill="none"
-            stroke={c.from}
-            strokeWidth="2"
-            opacity="0.8"
-            className="path-circle"
-          />
-        )}
-        {movement === "pulse" && showCrystal && (
-          <>
-            <circle cx={cellX} cy={cellY} r="28" fill="none" stroke={c.from} strokeWidth="2" opacity="0.8" className="path-pulse-ring" style={{ transformOrigin: `${cellX}px ${cellY}px` }} />
-            <circle cx={cellX} cy={cellY} r="28" fill="none" stroke={c.from} strokeWidth="1.5" opacity="0.6" className="path-pulse-ring" style={{ transformOrigin: `${cellX}px ${cellY}px`, animationDelay: "0.6s" }} />
-          </>
-        )}
-        {movement === "alternate" && showCrystal && (
-          <g className="path-alt" style={{ transformOrigin: `${cellX}px ${cellY}px` }}>
-            <line x1={cellX - 50} y1={cellY} x2={cellX + 50} y2={cellY} stroke={c.from} strokeWidth="2" opacity="0.75" />
-            <polygon points={`${cellX - 56},${cellY} ${cellX - 46},${cellY - 5} ${cellX - 46},${cellY + 5}`} fill={c.from} />
-            <polygon points={`${cellX + 56},${cellY} ${cellX + 46},${cellY - 5} ${cellX + 46},${cellY + 5}`} fill={c.to} />
-          </g>
-        )}
-        {movement === "expand" && showCrystal && (
-          <>
-            <circle cx={cellX} cy={cellY} r="22" fill="none" stroke={c.from} strokeWidth="2" opacity="0.8" className="path-expand-ring" style={{ transformOrigin: `${cellX}px ${cellY}px` }} />
-            <circle cx={cellX} cy={cellY} r="22" fill="none" stroke={c.to} strokeWidth="1.5" opacity="0.6" className="path-expand-ring" style={{ transformOrigin: `${cellX}px ${cellY}px`, animationDelay: "1s" }} />
-          </>
-        )}
+          )}
+          {movement === "pulse" && showCrystal && (
+            <>
+              <circle
+                cx={cellX}
+                cy={cellY}
+                r="7"
+                fill="none"
+                stroke={c.from}
+                strokeWidth="1"
+                opacity="0.85"
+                className="path-pulse-ring"
+                vectorEffect="non-scaling-stroke"
+                style={{ transformOrigin: `${cellX}px ${cellY}px` }}
+              />
+              <circle
+                cx={cellX}
+                cy={cellY}
+                r="7"
+                fill="none"
+                stroke={c.from}
+                strokeWidth="0.8"
+                opacity="0.65"
+                className="path-pulse-ring"
+                vectorEffect="non-scaling-stroke"
+                style={{ transformOrigin: `${cellX}px ${cellY}px`, animationDelay: "0.6s" }}
+              />
+            </>
+          )}
+          {movement === "alternate" && showCrystal && (
+            <g
+              className="path-alt"
+              vectorEffect="non-scaling-stroke"
+              style={{ transformOrigin: `${cellX}px ${cellY}px` }}
+            >
+              <line
+                x1={cellX - 14}
+                y1={cellY}
+                x2={cellX + 14}
+                y2={cellY}
+                stroke={c.from}
+                strokeWidth="1.2"
+                opacity="0.75"
+                vectorEffect="non-scaling-stroke"
+              />
+              <polygon
+                points={`${cellX - 16},${cellY} ${cellX - 12},${cellY - 1.5} ${cellX - 12},${cellY + 1.5}`}
+                fill={c.from}
+              />
+              <polygon
+                points={`${cellX + 16},${cellY} ${cellX + 12},${cellY - 1.5} ${cellX + 12},${cellY + 1.5}`}
+                fill={c.to}
+              />
+            </g>
+          )}
+          {movement === "expand" && showCrystal && (
+            <>
+              <circle
+                cx={cellX}
+                cy={cellY}
+                r="6"
+                fill="none"
+                stroke={c.from}
+                strokeWidth="1"
+                opacity="0.85"
+                className="path-expand-ring"
+                vectorEffect="non-scaling-stroke"
+                style={{ transformOrigin: `${cellX}px ${cellY}px` }}
+              />
+              <circle
+                cx={cellX}
+                cy={cellY}
+                r="6"
+                fill="none"
+                stroke={c.to}
+                strokeWidth="0.8"
+                opacity="0.6"
+                className="path-expand-ring"
+                vectorEffect="non-scaling-stroke"
+                style={{ transformOrigin: `${cellX}px ${cellY}px`, animationDelay: "1s" }}
+              />
+            </>
+          )}
 
-        {/* ===================== BEAM (crystal → cell) ===================== */}
-        {showCrystal && (
-          <g className="beam-glow">
-            {/* soft halo line */}
-            <line
-              x1={tipX}
-              y1={tipY}
-              x2={cellX}
-              y2={cellY}
-              stroke={`url(#beamGrad-${uid})`}
-              strokeWidth="14"
-              strokeLinecap="round"
-              opacity="0.35"
-              filter={`url(#softGlow-${uid})`}
-            />
-            {/* core beam */}
-            <line
-              x1={tipX}
-              y1={tipY}
-              x2={cellX}
-              y2={cellY}
-              stroke={`url(#beamGrad-${uid})`}
-              strokeWidth="4"
-              strokeLinecap="round"
-            />
-            {/* flowing dashes (energy traveling into cell) */}
-            <line
-              x1={tipX}
-              y1={tipY}
-              x2={cellX}
-              y2={cellY}
-              stroke={c.from}
-              strokeWidth="2"
-              strokeLinecap="round"
-              className="beam-flow"
-              opacity="0.95"
-            />
-          </g>
-        )}
-
-        {/* ===================== CRYSTAL ===================== */}
-        {showCrystal && (
-          <g
-            transform={`translate(${tipX} ${tipY}) rotate(36)`}
-            className={crystalMotion}
-            style={{ transformOrigin: `${tipX}px ${tipY}px` }}
-          >
-            {/* terminated tip pointing toward the cell */}
-            <polygon
-              points="0,0 -14,-22 14,-22"
-              fill={`url(#crystalBody-${uid})`}
-              stroke="rgba(255,255,255,0.7)"
-              strokeWidth="0.7"
-            />
-            {/* hexagonal prism body */}
-            <polygon
-              points="-14,-22 -16,-110 -8,-126 8,-126 16,-110 14,-22"
-              fill={`url(#crystalBody-${uid})`}
-              stroke="rgba(255,255,255,0.7)"
-              strokeWidth="0.7"
-            />
-            {/* facet shading */}
-            <polygon
-              points="-14,-22 -16,-110 -8,-126 0,-118 -2,-22"
-              fill="rgba(255,255,255,0.35)"
-            />
-            <polygon
-              points="0,-118 8,-126 16,-110 14,-22 -2,-22"
-              fill="rgba(0,30,60,0.18)"
-            />
-            {/* color tint near the tip */}
-            <polygon
-              points="-14,-22 14,-22 8,-60 -8,-60"
-              fill={`url(#crystalTint-${uid})`}
-              opacity="0.9"
-            />
-            {/* tip glow */}
-            <circle cx="0" cy="2" r="6" fill={c.from} opacity="0.9" filter={`url(#softGlow-${uid})`} />
-          </g>
-        )}
-
-        {/* ===================== LABELS ===================== */}
-        {showLabels && (
-          <g className="label-fade" fontFamily="-apple-system, system-ui, sans-serif">
-            {/* Crystal tip label */}
-            {showCrystal && (
-              <g>
-                <line x1={tipX - 4} y1={tipY - 6} x2={tipX - 50} y2={tipY - 40} stroke="rgba(255,255,255,0.45)" strokeWidth="1" />
-                <text x={tipX - 110} y={tipY - 44} fill="rgba(255,255,255,0.85)" fontSize="11" letterSpacing="1.5">
-                  CRYSTAL TIP
-                </text>
-              </g>
-            )}
-            {/* Proxy cell label */}
-            <g>
-              <line x1={cellX + cellR} y1={cellY} x2={cellX + 70} y2={cellY - 38} stroke="rgba(255,255,255,0.45)" strokeWidth="1" />
-              <text x={cellX + 60} y={cellY - 44} fill="rgba(255,235,180,0.95)" fontSize="11" letterSpacing="1.5">
+          {/* Labels (leader lines + text) */}
+          {showLabels && (
+            <g
+              className="label-fade"
+              fontFamily="-apple-system, system-ui, sans-serif"
+              vectorEffect="non-scaling-stroke"
+            >
+              {/* PROXY CELL */}
+              <line
+                x1={cellX + 5}
+                y1={cellY - 2}
+                x2={cellX + 28}
+                y2={cellY - 8}
+                stroke="rgba(255,255,255,0.45)"
+                strokeWidth="0.4"
+                vectorEffect="non-scaling-stroke"
+              />
+              <text
+                x={cellX + 29}
+                y={cellY - 8}
+                fill="rgba(255,235,180,0.95)"
+                fontSize="2.4"
+                letterSpacing="0.4"
+              >
                 PROXY CELL
               </text>
-            </g>
-            {/* Index finger label */}
-            <g>
-              <line x1="248" y1="168" x2="302" y2="122" stroke="rgba(255,255,255,0.4)" strokeWidth="1" />
-              <text x="298" y="116" fill="rgba(255,255,255,0.8)" fontSize="11" letterSpacing="1.5">
-                INDEX
-              </text>
-            </g>
-            {/* Thumb label */}
-            <g>
-              <line x1="184" y1="272" x2="118" y2="304" stroke="rgba(255,255,255,0.4)" strokeWidth="1" />
-              <text x="50" y="308" fill="rgba(255,255,255,0.8)" fontSize="11" letterSpacing="1.5">
+
+              {/* CRYSTAL TIP */}
+              {showCrystal && (
+                <>
+                  <line
+                    x1={tipX - 2}
+                    y1={tipY - 1}
+                    x2={tipX - 12}
+                    y2={tipY - 8}
+                    stroke="rgba(255,255,255,0.45)"
+                    strokeWidth="0.4"
+                    vectorEffect="non-scaling-stroke"
+                  />
+                  <text
+                    x={tipX - 14}
+                    y={tipY - 9}
+                    fill="rgba(255,255,255,0.85)"
+                    fontSize="2.4"
+                    letterSpacing="0.4"
+                    textAnchor="end"
+                  >
+                    CRYSTAL TIP
+                  </text>
+                </>
+              )}
+
+              {/* THUMB */}
+              <line
+                x1="10"
+                y1="24"
+                x2="2"
+                y2="30"
+                stroke="rgba(255,255,255,0.4)"
+                strokeWidth="0.4"
+                vectorEffect="non-scaling-stroke"
+              />
+              <text x="0" y="33" fill="rgba(255,255,255,0.8)" fontSize="2.4" letterSpacing="0.4">
                 THUMB
               </text>
+
+              {/* INDEX */}
+              <line
+                x1="36"
+                y1="10"
+                x2="52"
+                y2="4"
+                stroke="rgba(255,255,255,0.4)"
+                strokeWidth="0.4"
+                vectorEffect="non-scaling-stroke"
+              />
+              <text x="54" y="4" fill="rgba(255,255,255,0.8)" fontSize="2.4" letterSpacing="0.4">
+                INDEX
+              </text>
+
+              {/* Distance ~5 cm */}
+              {showCrystal && (
+                <>
+                  <line
+                    x1={tipX + 1}
+                    y1={tipY + 1}
+                    x2={cellX - 2}
+                    y2={cellY - 1}
+                    stroke="rgba(255,255,255,0.35)"
+                    strokeWidth="0.3"
+                    strokeDasharray="0.6 1"
+                    vectorEffect="non-scaling-stroke"
+                  />
+                  <text
+                    x={(tipX + cellX) / 2 - 5}
+                    y={(tipY + cellY) / 2 + 5}
+                    fill="rgba(255,255,255,0.7)"
+                    fontSize="2"
+                    letterSpacing="0.3"
+                  >
+                    ~5 cm
+                  </text>
+                </>
+              )}
             </g>
-            {/* Distance hint */}
-            {showCrystal && (
-              <g opacity="0.55">
-                <line x1={tipX + 10} y1={tipY + 6} x2={cellX - 22} y2={cellY - 14} stroke="rgba(255,255,255,0.35)" strokeDasharray="1 3" />
-                <text x={(tipX + cellX) / 2 - 18} y={(tipY + cellY) / 2 + 22} fill="rgba(255,255,255,0.7)" fontSize="9" letterSpacing="1">
-                  ~5 cm
-                </text>
-              </g>
-            )}
-          </g>
+          )}
+        </svg>
+
+        {/* Proxy cell (glowing orb inside the finger loop) */}
+        <div
+          className="absolute pointer-events-none"
+          style={{
+            left: `${cellX}%`,
+            top: `${cellY}%`,
+            width: "14%",
+            aspectRatio: "1 / 1",
+            transform: "translate(-50%,-50%)",
+          }}
+        >
+          <div
+            className="w-full h-full rounded-full cell-glow"
+            style={{
+              ["--cell-glow" as never]: c.ring,
+              background: `radial-gradient(circle, #ffffff 0%, ${c.from} 28%, ${c.to} 65%, transparent 100%)`,
+              boxShadow: `0 0 24px ${c.ring}, inset 0 0 12px rgba(255,255,255,0.55)`,
+            } as React.CSSProperties}
+          />
+          {intensity > 1.2 && (
+            <div
+              className="reminder-ring absolute inset-0 rounded-full"
+              style={{ border: `2px solid ${c.from}`, transformOrigin: "center" }}
+            />
+          )}
+        </div>
+
+        {/* Crystal asset (animated wrapper does the motion; inner rotates) */}
+        {showCrystal && (
+          <div
+            className={`absolute pointer-events-none ${crystalMotion}`}
+            style={{
+              left: `${crystalLeft}%`,
+              top: `${crystalTop}%`,
+              width: `${crystalW}%`,
+              transformOrigin: "50% 100%",
+              filter: `drop-shadow(0 0 12px ${c.ring}) drop-shadow(0 0 4px ${c.from}) drop-shadow(0 8px 14px rgba(0,0,0,0.45))`,
+            }}
+          >
+            <div
+              style={{
+                transform: "rotate(18deg)",
+                transformOrigin: "50% 100%",
+              }}
+            >
+              <img
+                src={CRYSTAL_IMG}
+                alt=""
+                draggable={false}
+                className="w-full h-auto select-none pointer-events-none"
+              />
+            </div>
+          </div>
         )}
-      </svg>
+      </div>
+
+      {/* legacy block removed */}
 
       {label && (
         <div className="absolute bottom-2 text-[10px] uppercase tracking-[0.2em] text-white/55">
@@ -1780,14 +1831,17 @@ function SessionTrainer({
 }) {
   const steps = useMemo(() => protocol.buildSteps(), [protocol]);
   const [stepIdx, setStepIdx] = useState(0);
-  const [running, setRunning] = useState(mode === "guided");
   const [elapsed, setElapsed] = useState(0);
   const [extension, setExtension] = useState(0);
   const [reminderPulse, setReminderPulse] = useState(false);
-  const [sheet, setSheet] = useState<null | "why" | "install" | "scan">(null);
+  // Scan-before must complete before the timer starts; scan-after must complete before onComplete fires.
+  const [scanBeforeDone, setScanBeforeDone] = useState(false);
+  const [scanAfterDone, setScanAfterDone] = useState(false);
+  const [sheet, setSheet] = useState<null | "why" | "install" | "scan">("scan");
   const [scanPhase, setScanPhase] = useState<"before" | "after">("before");
   const [scanBefore, setScanBefore] = useState<string[]>([]);
   const [scanAfter, setScanAfter] = useState<string[]>([]);
+  const [running, setRunning] = useState(false);
   const step = steps[stepIdx];
   const effectiveDuration = step.duration + extension;
 
@@ -1796,7 +1850,7 @@ function SessionTrainer({
   useEffect(() => {
     setElapsed(0);
     setExtension(0);
-    setSheet(null);
+    setSheet((s) => (s === "scan" ? s : null));
     speak(step.voice, voice);
   }, [stepIdx, step.voice, voice]);
 
@@ -1809,10 +1863,18 @@ function SessionTrainer({
   useEffect(() => {
     if (mode === "practitioner") return;
     if (elapsed >= effectiveDuration) {
-      if (stepIdx < steps.length - 1) setStepIdx((i) => i + 1);
-      else onComplete();
+      if (stepIdx < steps.length - 1) {
+        setStepIdx((i) => i + 1);
+      } else if (!scanAfterDone) {
+        // Require Scan After before completing.
+        setRunning(false);
+        setScanPhase("after");
+        setSheet("scan");
+      } else {
+        onComplete();
+      }
     }
-  }, [elapsed, effectiveDuration, stepIdx, steps.length, onComplete, mode]);
+  }, [elapsed, effectiveDuration, stepIdx, steps.length, onComplete, mode, scanAfterDone]);
 
   useEffect(() => {
     if (elapsed > 0 && elapsed % 30 === 0 && running) {
@@ -1955,8 +2017,8 @@ function SessionTrainer({
               <Repeat size={12} />
             </button>
           </div>
-          <div className="text-white/95 text-[13px] mt-1 leading-snug line-clamp-2">
-            "This cell represents all the cells of the {protocol.systemPhrase} of {recipientName}, wherever affected."
+          <div className="text-white/95 text-[13px] mt-1 leading-snug">
+            “{proxyStatement}”
           </div>
         </div>
 
@@ -1966,9 +2028,7 @@ function SessionTrainer({
             Action
           </div>
           <div className="text-white/95 text-[13px] mt-0.5 leading-snug line-clamp-2">
-            {step.instruction.replace(/^.*?[.!?]\s/, "").length > 10 && step.instruction.split(". ").length > 1
-              ? step.instruction.split(". ").slice(-1)[0]
-              : step.instruction}
+            {step.shortAction}
           </div>
         </div>
 
@@ -1995,7 +2055,7 @@ function SessionTrainer({
           </button>
           <button
             onClick={() => {
-              setScanPhase(stepIdx === 0 ? "before" : "after");
+              setScanPhase(stepIdx === steps.length - 1 ? "after" : "before");
               setSheet("scan");
             }}
             className="btn-ghost rounded-full px-3 py-2 text-[11px] flex items-center gap-1.5"
@@ -2034,22 +2094,32 @@ function SessionTrainer({
           <button
             onClick={() => {
               if (stepIdx < steps.length - 1) setStepIdx((i) => i + 1);
-              else onComplete();
+              else if (!scanAfterDone) {
+                setRunning(false);
+                setScanPhase("after");
+                setSheet("scan");
+              } else onComplete();
             }}
-            className="ml-auto text-[11px] text-white/45 hover:text-white/75 px-1"
+            className="ml-auto text-[10px] text-white/35 hover:text-white/65 px-1"
             aria-label="Skip step"
           >
-            Skip <SkipForward size={11} className="inline -mt-0.5 ml-1" />
+            Skip <SkipForward size={10} className="inline -mt-0.5 ml-1" />
           </button>
         </div>
       </div>
 
       {/* SHEETS (progressive disclosure) */}
-      {sheet && (
+      {sheet && sheet !== "scan" && (
         <button
           aria-label="Close"
           onClick={() => setSheet(null)}
           className="absolute inset-0 bg-black/55 backdrop-blur-sm z-50"
+        />
+      )}
+      {sheet === "scan" && (
+        <div
+          aria-hidden
+          className="absolute inset-0 bg-black/65 backdrop-blur-sm z-50 pointer-events-auto"
         />
       )}
       {sheet === "why" && (
@@ -2130,11 +2200,33 @@ function SessionTrainer({
                 )}
               </div>
             )}
+            <div className="text-[11px] text-white/45 mt-3 leading-relaxed">
+              {scanPhase === "before"
+                ? "Required — a quick check before the practice begins. Tap any that apply, or ‘no sensation’."
+                : "Required — notice what changed before completing."}
+            </div>
             <button
-              onClick={() => setSheet(null)}
+              onClick={() => {
+                if (scanPhase === "before") {
+                  setScanBeforeDone(true);
+                  setRunning(mode === "guided");
+                } else {
+                  setScanAfterDone(true);
+                  // If we were at the final step, complete now.
+                  if (stepIdx === steps.length - 1 && elapsed >= effectiveDuration) {
+                    onComplete();
+                    return;
+                  }
+                }
+                setSheet(null);
+              }}
               className="btn-gold w-full rounded-2xl py-2.5 mt-4 text-sm font-medium"
             >
-              Done
+              {scanPhase === "before"
+                ? scanBeforeDone
+                  ? "Resume practice"
+                  : "Begin practice"
+                : "Complete practice"}
             </button>
           </div>
         </div>
