@@ -320,6 +320,98 @@
   animation: expandAura 4s ease-in-out infinite;
 }
 
+/* ---------- Realistic trainer visual ---------- */
+
+/* Animated beam dash flowing from crystal tip into the proxy cell */
+@keyframes beamFlow {
+  0% { stroke-dashoffset: 0; }
+  100% { stroke-dashoffset: -60; }
+}
+.beam-flow {
+  stroke-dasharray: 6 10;
+  animation: beamFlow 1.4s linear infinite;
+}
+
+@keyframes beamGlow {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}
+.beam-glow { animation: beamGlow 2s ease-in-out infinite; }
+
+/* Movement path overlays */
+@keyframes pathSweepDown {
+  0% { stroke-dashoffset: 0; opacity: 0.2; }
+  50% { opacity: 1; }
+  100% { stroke-dashoffset: -80; opacity: 0.2; }
+}
+.path-sweep { stroke-dasharray: 4 6; animation: pathSweepDown 2.2s linear infinite; }
+
+@keyframes pathCircle {
+  0% { stroke-dashoffset: 0; }
+  100% { stroke-dashoffset: -200; }
+}
+.path-circle { stroke-dasharray: 5 7; animation: pathCircle 5s linear infinite; }
+
+@keyframes pathPulse {
+  0% { r: 28; opacity: 0.9; }
+  100% { r: 70; opacity: 0; }
+}
+.path-pulse-ring { transform-origin: center; animation: pathPulse 2.2s ease-out infinite; }
+
+@keyframes pathAlternate {
+  0%, 100% { transform: translateX(-12px); opacity: 0.4; }
+  50% { transform: translateX(12px); opacity: 1; }
+}
+.path-alt { animation: pathAlternate 1.8s ease-in-out infinite; }
+
+@keyframes pathExpand {
+  0% { r: 22; opacity: 0.9; stroke-width: 2; }
+  100% { r: 100; opacity: 0; stroke-width: 0.5; }
+}
+.path-expand-ring { animation: pathExpand 3s ease-out infinite; }
+
+/* Cell pulse (replaces SVG-only one, works on any element) */
+@keyframes cellGlow {
+  0%, 100% { filter: drop-shadow(0 0 10px var(--cell-glow, rgba(232,194,106,0.6))); }
+  50% { filter: drop-shadow(0 0 28px var(--cell-glow, rgba(232,194,106,1))); }
+}
+.cell-glow { animation: cellGlow 2.6s ease-in-out infinite; }
+
+/* Reminder pulse (used on 30s repeat) */
+@keyframes reminderRing {
+  0% { transform: scale(1); opacity: 0.6; }
+  100% { transform: scale(2.2); opacity: 0; }
+}
+.reminder-ring { animation: reminderRing 1.6s ease-out infinite; transform-origin: center; }
+
+/* Crystal subtle breathing while held */
+@keyframes crystalHold {
+  0%, 100% { transform: translate(0,0); }
+  50% { transform: translate(0,-3px); }
+}
+.crystal-hold { animation: crystalHold 3.6s ease-in-out infinite; transform-origin: center; }
+
+/* Crystal sweep-down motion (moves along beam axis) */
+@keyframes crystalSweepAxis {
+  0%, 100% { transform: translate(0,-10px); }
+  50% { transform: translate(8px, 14px); }
+}
+.crystal-sweep-axis { animation: crystalSweepAxis 2.6s ease-in-out infinite; transform-origin: center; }
+
+/* Crystal small circular orbit while held */
+@keyframes crystalOrbit {
+  0% { transform: rotate(0deg) translate(8px) rotate(0deg); }
+  100% { transform: rotate(360deg) translate(8px) rotate(-360deg); }
+}
+.crystal-orbit { animation: crystalOrbit 5s linear infinite; transform-origin: center; transform-box: fill-box; }
+
+/* Label leader line gentle fade */
+@keyframes labelFade {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 0.95; }
+}
+.label-fade { animation: labelFade 4s ease-in-out infinite; }
+
 /* Scrollbar */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }

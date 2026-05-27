@@ -1342,119 +1342,393 @@ function ProxyCellVisual({
   showCrystal,
   label,
   intensity = 1,
+  showLabels = true,
 }: {
   color: ColorTone;
   movement: MovementKind;
   showCrystal: boolean;
   label?: string;
   intensity?: number;
+  showLabels?: boolean;
 }) {
   const c = colorMap[color];
-  const crystalAnimClass =
-    movement === "circle-cw"
-      ? "crystal-circle"
-      : movement === "sweep-down"
-      ? "crystal-sweep"
+
+  // Proxy cell position (fixed in viewBox 400x400)
+  const cellX = 215;
+  const cellY = 215;
+  const cellR = 30;
+
+  // Crystal tip position — close to but not touching the cell
+  const tipX = 152;
+  const tipY = 165;
+
+  // Crystal motion class (subtle, anchored on its group)
+  const crystalMotion =
+    movement === "sweep-down"
+      ? "crystal-sweep-axis"
+      : movement === "circle-cw"
+      ? "crystal-orbit"
       : movement === "pulse"
       ? "crystal-pulse"
       : movement === "alternate"
       ? "crystal-alternate"
-      : movement === "expand"
-      ? "crystal-expand"
-      : "crystal-beam";
+      : "crystal-hold";
+
+  const uid = color; // unique-ish suffix for gradient ids
 
   return (
     <div className="relative w-full h-full flex items-center justify-center">
-      {/* outer aura */}
+      {/* outer cinematic aura */}
       <div
-        className={`absolute rounded-full ${movement === "expand" ? "expand-aura" : ""}`}
+        className={`absolute rounded-full pointer-events-none ${movement === "expand" ? "expand-aura" : ""}`}
         style={{
-          width: 220,
-          height: 220,
+          width: "82%",
+          maxWidth: 360,
+          aspectRatio: "1 / 1",
           background: `radial-gradient(circle, ${c.ring} 0%, transparent 70%)`,
-          opacity: 0.6 * intensity,
-          filter: "blur(8px)",
+          opacity: 0.55 * intensity,
+          filter: "blur(14px)",
         }}
       />
 
-      {/* hand silhouette — thumb + index forming the proxy cell circle */}
-      <svg viewBox="0 0 240 240" className="absolute inset-0 m-auto w-56 h-56" aria-hidden>
+      <svg
+        viewBox="0 0 400 400"
+        className="relative w-full h-full max-w-[420px] max-h-[420px]"
+        aria-hidden
+      >
         <defs>
-          <linearGradient id="skin" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="#f3d4b4" />
-            <stop offset="100%" stopColor="#b88a64" />
+          {/* Skin tones — soft, candle-lit */}
+          <linearGradient id={`skin-${uid}`} x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="#f6d4b0" />
+            <stop offset="55%" stopColor="#d9a47a" />
+            <stop offset="100%" stopColor="#8b5a3c" />
           </linearGradient>
-          <radialGradient id={`cellGrad-${color}`} cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor={c.from} stopOpacity="1" />
-            <stop offset="60%" stopColor={c.to} stopOpacity="0.9" />
+          <linearGradient id={`skin-shade-${uid}`} x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="rgba(0,0,0,0)" />
+            <stop offset="100%" stopColor="rgba(0,0,0,0.35)" />
+          </linearGradient>
+
+          {/* Proxy cell core */}
+          <radialGradient id={`cellGrad-${uid}`} cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="#ffffff" stopOpacity="1" />
+            <stop offset="25%" stopColor={c.from} stopOpacity="1" />
+            <stop offset="70%" stopColor={c.to} stopOpacity="0.85" />
             <stop offset="100%" stopColor={c.to} stopOpacity="0" />
           </radialGradient>
+
+          {/* Crystal gradients */}
+          <linearGradient id={`crystalBody-${uid}`} x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="rgba(255,255,255,0.95)" />
+            <stop offset="40%" stopColor="rgba(220,230,245,0.55)" />
+            <stop offset="100%" stopColor="rgba(180,200,230,0.25)" />
+          </linearGradient>
+          <linearGradient id={`crystalTint-${uid}`} x1="0" y1="1" x2="0" y2="0">
+            <stop offset="0%" stopColor={c.from} stopOpacity="0.75" />
+            <stop offset="100%" stopColor={c.to} stopOpacity="0" />
+          </linearGradient>
+
+          {/* Beam gradient (from cell back toward crystal tip) */}
+          <linearGradient
+            id={`beamGrad-${uid}`}
+            x1={tipX}
+            y1={tipY}
+            x2={cellX}
+            y2={cellY}
+            gradientUnits="userSpaceOnUse"
+          >
+            <stop offset="0%" stopColor={c.from} stopOpacity="0.95" />
+            <stop offset="100%" stopColor={c.to} stopOpacity="0.2" />
+          </linearGradient>
+
+          {/* Soft glow filter */}
+          <filter id={`softGlow-${uid}`} x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="4" result="b" />
+            <feMerge>
+              <feMergeNode in="b" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
         </defs>
-        {/* thumb */}
+
+        {/* ============================ HAND ============================ */}
+        {/* Back fingers (middle, ring, pinky) — extending up-right behind the loop */}
+        <g opacity="0.92">
+          <path
+            d="M 238 270 Q 248 215 262 168 Q 272 152 282 162 Q 280 215 268 275 Z"
+            fill={`url(#skin-${uid})`}
+            stroke="rgba(60,30,10,0.25)"
+            strokeWidth="1"
+          />
+          <path
+            d="M 255 275 Q 268 232 282 192 Q 292 180 300 192 Q 295 232 285 282 Z"
+            fill={`url(#skin-${uid})`}
+            stroke="rgba(60,30,10,0.25)"
+            strokeWidth="1"
+          />
+          <path
+            d="M 273 282 Q 285 250 296 218 Q 304 210 310 220 Q 305 252 297 286 Z"
+            fill={`url(#skin-${uid})`}
+            stroke="rgba(60,30,10,0.25)"
+            strokeWidth="1"
+          />
+        </g>
+
+        {/* Palm + wrist */}
         <path
-          d="M70 175 Q60 140 78 118 Q92 100 110 108 Q124 116 118 132 Q112 144 102 148"
-          fill="url(#skin)"
-          opacity="0.85"
-          stroke="rgba(0,0,0,0.2)"
+          d="M 195 395 L 195 300 Q 195 270 218 262 L 285 270 Q 308 275 312 305 L 312 395 Z"
+          fill={`url(#skin-${uid})`}
+          stroke="rgba(60,30,10,0.25)"
           strokeWidth="1"
         />
-        {/* index finger */}
         <path
-          d="M150 175 Q160 140 142 118 Q128 100 110 108 Q96 116 102 132 Q108 144 118 148"
-          fill="url(#skin)"
-          opacity="0.85"
-          stroke="rgba(0,0,0,0.2)"
+          d="M 195 395 L 195 300 Q 195 270 218 262 L 285 270 Q 308 275 312 305 L 312 395 Z"
+          fill={`url(#skin-shade-${uid})`}
+          opacity="0.5"
+        />
+
+        {/* Index finger — forming top of the loop, curving up and around */}
+        <path
+          d="M 232 275 Q 218 235 220 200 Q 226 168 245 158 Q 258 158 256 175 Q 244 195 232 215 Q 224 245 232 275 Z"
+          fill={`url(#skin-${uid})`}
+          stroke="rgba(60,30,10,0.28)"
           strokeWidth="1"
         />
-        {/* lower hand body */}
+
+        {/* Thumb — wraps from palm base to meet index tip, forming the bottom of the loop */}
         <path
-          d="M60 195 Q60 175 75 170 L145 170 Q160 175 160 195 L160 230 L60 230 Z"
-          fill="url(#skin)"
-          opacity="0.7"
+          d="M 200 308 Q 184 280 188 252 Q 200 228 222 218 Q 240 210 250 196 Q 256 180 246 175 Q 230 178 212 198 Q 195 224 184 268 Q 178 290 184 308 Z"
+          fill={`url(#skin-${uid})`}
+          stroke="rgba(60,30,10,0.28)"
+          strokeWidth="1"
         />
-        {/* proxy cell circle (between thumb and index) */}
+        {/* Thumb-nail highlight */}
+        <ellipse cx="246" cy="180" rx="6" ry="4" fill="rgba(255,240,220,0.55)" />
+
+        {/* ===================== PROXY CELL ===================== */}
+        {/* outer ring (anatomical marker) */}
         <circle
-          cx="110"
-          cy="128"
-          r="22"
-          fill={`url(#cellGrad-${color})`}
-          className="proxy-cell-pulse"
-        />
-        <circle
-          cx="110"
-          cy="128"
-          r="22"
+          cx={cellX}
+          cy={cellY}
+          r={cellR + 8}
           fill="none"
           stroke={c.from}
-          strokeWidth="1"
-          opacity="0.6"
+          strokeOpacity="0.35"
+          strokeDasharray="2 4"
         />
-      </svg>
+        {/* glowing cell */}
+        <g style={{ ["--cell-glow" as never]: c.ring } as React.CSSProperties} className="cell-glow">
+          <circle
+            cx={cellX}
+            cy={cellY}
+            r={cellR}
+            fill={`url(#cellGrad-${uid})`}
+            filter={`url(#softGlow-${uid})`}
+          />
+          <circle
+            cx={cellX}
+            cy={cellY}
+            r={cellR}
+            fill="none"
+            stroke="rgba(255,255,255,0.85)"
+            strokeWidth="1"
+            opacity="0.6"
+          />
+          {/* inner highlight */}
+          <ellipse cx={cellX - 8} cy={cellY - 10} rx="10" ry="6" fill="rgba(255,255,255,0.75)" />
+        </g>
 
-      {/* crystal */}
-      {showCrystal && (
-        <div className={`absolute ${crystalAnimClass}`} style={{ width: 60, height: 60, top: "30%", left: "62%" }}>
-          <svg viewBox="0 0 60 60" className="w-full h-full">
-            <defs>
-              <linearGradient id={`crystalGrad-${color}`} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor={c.from} />
-                <stop offset="100%" stopColor={c.to} />
-              </linearGradient>
-            </defs>
-            <polygon
-              points="30,4 50,22 42,52 18,52 10,22"
-              fill={`url(#crystalGrad-${color})`}
-              stroke="rgba(255,255,255,0.5)"
-              strokeWidth="0.8"
-              filter={`drop-shadow(0 0 8px ${c.from})`}
+        {/* Reminder ring (pulses when intensity is high) */}
+        {intensity > 1.2 && (
+          <circle
+            cx={cellX}
+            cy={cellY}
+            r={cellR}
+            fill="none"
+            stroke={c.from}
+            strokeWidth="2"
+            className="reminder-ring"
+            style={{ transformOrigin: `${cellX}px ${cellY}px` }}
+          />
+        )}
+
+        {/* ===================== MOVEMENT PATH ===================== */}
+        {movement === "sweep-down" && showCrystal && (
+          <g>
+            <line
+              x1={cellX}
+              y1={cellY - 50}
+              x2={cellX}
+              y2={cellY + 70}
+              stroke={c.from}
+              strokeWidth="2"
+              opacity="0.7"
+              className="path-sweep"
             />
             <polygon
-              points="30,4 50,22 30,30 10,22"
-              fill="rgba(255,255,255,0.25)"
+              points={`${cellX - 5},${cellY + 64} ${cellX + 5},${cellY + 64} ${cellX},${cellY + 76}`}
+              fill={c.from}
+              opacity="0.85"
             />
-          </svg>
-        </div>
-      )}
+          </g>
+        )}
+        {movement === "circle-cw" && showCrystal && (
+          <circle
+            cx={cellX}
+            cy={cellY}
+            r={cellR + 22}
+            fill="none"
+            stroke={c.from}
+            strokeWidth="2"
+            opacity="0.8"
+            className="path-circle"
+          />
+        )}
+        {movement === "pulse" && showCrystal && (
+          <>
+            <circle cx={cellX} cy={cellY} r="28" fill="none" stroke={c.from} strokeWidth="2" opacity="0.8" className="path-pulse-ring" style={{ transformOrigin: `${cellX}px ${cellY}px` }} />
+            <circle cx={cellX} cy={cellY} r="28" fill="none" stroke={c.from} strokeWidth="1.5" opacity="0.6" className="path-pulse-ring" style={{ transformOrigin: `${cellX}px ${cellY}px`, animationDelay: "0.6s" }} />
+          </>
+        )}
+        {movement === "alternate" && showCrystal && (
+          <g className="path-alt" style={{ transformOrigin: `${cellX}px ${cellY}px` }}>
+            <line x1={cellX - 50} y1={cellY} x2={cellX + 50} y2={cellY} stroke={c.from} strokeWidth="2" opacity="0.75" />
+            <polygon points={`${cellX - 56},${cellY} ${cellX - 46},${cellY - 5} ${cellX - 46},${cellY + 5}`} fill={c.from} />
+            <polygon points={`${cellX + 56},${cellY} ${cellX + 46},${cellY - 5} ${cellX + 46},${cellY + 5}`} fill={c.to} />
+          </g>
+        )}
+        {movement === "expand" && showCrystal && (
+          <>
+            <circle cx={cellX} cy={cellY} r="22" fill="none" stroke={c.from} strokeWidth="2" opacity="0.8" className="path-expand-ring" style={{ transformOrigin: `${cellX}px ${cellY}px` }} />
+            <circle cx={cellX} cy={cellY} r="22" fill="none" stroke={c.to} strokeWidth="1.5" opacity="0.6" className="path-expand-ring" style={{ transformOrigin: `${cellX}px ${cellY}px`, animationDelay: "1s" }} />
+          </>
+        )}
+
+        {/* ===================== BEAM (crystal → cell) ===================== */}
+        {showCrystal && (
+          <g className="beam-glow">
+            {/* soft halo line */}
+            <line
+              x1={tipX}
+              y1={tipY}
+              x2={cellX}
+              y2={cellY}
+              stroke={`url(#beamGrad-${uid})`}
+              strokeWidth="14"
+              strokeLinecap="round"
+              opacity="0.35"
+              filter={`url(#softGlow-${uid})`}
+            />
+            {/* core beam */}
+            <line
+              x1={tipX}
+              y1={tipY}
+              x2={cellX}
+              y2={cellY}
+              stroke={`url(#beamGrad-${uid})`}
+              strokeWidth="4"
+              strokeLinecap="round"
+            />
+            {/* flowing dashes (energy traveling into cell) */}
+            <line
+              x1={tipX}
+              y1={tipY}
+              x2={cellX}
+              y2={cellY}
+              stroke={c.from}
+              strokeWidth="2"
+              strokeLinecap="round"
+              className="beam-flow"
+              opacity="0.95"
+            />
+          </g>
+        )}
+
+        {/* ===================== CRYSTAL ===================== */}
+        {showCrystal && (
+          <g
+            transform={`translate(${tipX} ${tipY}) rotate(36)`}
+            className={crystalMotion}
+            style={{ transformOrigin: `${tipX}px ${tipY}px` }}
+          >
+            {/* terminated tip pointing toward the cell */}
+            <polygon
+              points="0,0 -14,-22 14,-22"
+              fill={`url(#crystalBody-${uid})`}
+              stroke="rgba(255,255,255,0.7)"
+              strokeWidth="0.7"
+            />
+            {/* hexagonal prism body */}
+            <polygon
+              points="-14,-22 -16,-110 -8,-126 8,-126 16,-110 14,-22"
+              fill={`url(#crystalBody-${uid})`}
+              stroke="rgba(255,255,255,0.7)"
+              strokeWidth="0.7"
+            />
+            {/* facet shading */}
+            <polygon
+              points="-14,-22 -16,-110 -8,-126 0,-118 -2,-22"
+              fill="rgba(255,255,255,0.35)"
+            />
+            <polygon
+              points="0,-118 8,-126 16,-110 14,-22 -2,-22"
+              fill="rgba(0,30,60,0.18)"
+            />
+            {/* color tint near the tip */}
+            <polygon
+              points="-14,-22 14,-22 8,-60 -8,-60"
+              fill={`url(#crystalTint-${uid})`}
+              opacity="0.9"
+            />
+            {/* tip glow */}
+            <circle cx="0" cy="2" r="6" fill={c.from} opacity="0.9" filter={`url(#softGlow-${uid})`} />
+          </g>
+        )}
+
+        {/* ===================== LABELS ===================== */}
+        {showLabels && (
+          <g className="label-fade" fontFamily="-apple-system, system-ui, sans-serif">
+            {/* Crystal tip label */}
+            {showCrystal && (
+              <g>
+                <line x1={tipX - 4} y1={tipY - 6} x2={tipX - 50} y2={tipY - 40} stroke="rgba(255,255,255,0.45)" strokeWidth="1" />
+                <text x={tipX - 110} y={tipY - 44} fill="rgba(255,255,255,0.85)" fontSize="11" letterSpacing="1.5">
+                  CRYSTAL TIP
+                </text>
+              </g>
+            )}
+            {/* Proxy cell label */}
+            <g>
+              <line x1={cellX + cellR} y1={cellY} x2={cellX + 70} y2={cellY - 38} stroke="rgba(255,255,255,0.45)" strokeWidth="1" />
+              <text x={cellX + 60} y={cellY - 44} fill="rgba(255,235,180,0.95)" fontSize="11" letterSpacing="1.5">
+                PROXY CELL
+              </text>
+            </g>
+            {/* Index finger label */}
+            <g>
+              <line x1="248" y1="168" x2="302" y2="122" stroke="rgba(255,255,255,0.4)" strokeWidth="1" />
+              <text x="298" y="116" fill="rgba(255,255,255,0.8)" fontSize="11" letterSpacing="1.5">
+                INDEX
+              </text>
+            </g>
+            {/* Thumb label */}
+            <g>
+              <line x1="184" y1="272" x2="118" y2="304" stroke="rgba(255,255,255,0.4)" strokeWidth="1" />
+              <text x="50" y="308" fill="rgba(255,255,255,0.8)" fontSize="11" letterSpacing="1.5">
+                THUMB
+              </text>
+            </g>
+            {/* Distance hint */}
+            {showCrystal && (
+              <g opacity="0.55">
+                <line x1={tipX + 10} y1={tipY + 6} x2={cellX - 22} y2={cellY - 14} stroke="rgba(255,255,255,0.35)" strokeDasharray="1 3" />
+                <text x={(tipX + cellX) / 2 - 18} y={(tipY + cellY) / 2 + 22} fill="rgba(255,255,255,0.7)" fontSize="9" letterSpacing="1">
+                  ~5 cm
+                </text>
+              </g>
+            )}
+          </g>
+        )}
+      </svg>
 
       {label && (
         <div className="absolute bottom-2 text-[10px] uppercase tracking-[0.2em] text-white/55">
@@ -1508,14 +1782,20 @@ function SessionTrainer({
   const [stepIdx, setStepIdx] = useState(0);
   const [running, setRunning] = useState(mode === "guided");
   const [elapsed, setElapsed] = useState(0);
+  const [extension, setExtension] = useState(0);
   const [reminderPulse, setReminderPulse] = useState(false);
-  const [sheet, setSheet] = useState<null | "why" | "install">(null);
+  const [sheet, setSheet] = useState<null | "why" | "install" | "scan">(null);
+  const [scanPhase, setScanPhase] = useState<"before" | "after">("before");
+  const [scanBefore, setScanBefore] = useState<string[]>([]);
+  const [scanAfter, setScanAfter] = useState<string[]>([]);
   const step = steps[stepIdx];
+  const effectiveDuration = step.duration + extension;
 
   const proxyStatement = `This cell represents all the cells of the ${protocol.systemPhrase} of ${recipientName}, wherever affected.`;
 
   useEffect(() => {
     setElapsed(0);
+    setExtension(0);
     setSheet(null);
     speak(step.voice, voice);
   }, [stepIdx, step.voice, voice]);
@@ -1528,11 +1808,11 @@ function SessionTrainer({
 
   useEffect(() => {
     if (mode === "practitioner") return;
-    if (elapsed >= step.duration) {
+    if (elapsed >= effectiveDuration) {
       if (stepIdx < steps.length - 1) setStepIdx((i) => i + 1);
       else onComplete();
     }
-  }, [elapsed, step.duration, stepIdx, steps.length, onComplete, mode]);
+  }, [elapsed, effectiveDuration, stepIdx, steps.length, onComplete, mode]);
 
   useEffect(() => {
     if (elapsed > 0 && elapsed % 30 === 0 && running) {
@@ -1544,8 +1824,15 @@ function SessionTrainer({
     }
   }, [elapsed, running, proxyStatement, voice]);
 
-  const pct = Math.min(100, (elapsed / step.duration) * 100);
-  const remaining = Math.max(0, step.duration - elapsed);
+  const triggerReminder = () => {
+    setReminderPulse(true);
+    chime();
+    speak("Repeat now. " + proxyStatement, voice);
+    setTimeout(() => setReminderPulse(false), 3500);
+  };
+
+  const pct = Math.min(100, (elapsed / effectiveDuration) * 100);
+  const remaining = Math.max(0, effectiveDuration - elapsed);
   const cc = colorMap[step.color];
   const mm = Math.floor(remaining / 60);
   const ss = remaining % 60;
@@ -1685,27 +1972,37 @@ function SessionTrainer({
           </div>
         </div>
 
-        {/* Controls */}
+        {/* Primary actions row */}
         <div className="mt-3 flex items-center gap-2">
           <button
-            onClick={() => setSheet("why")}
+            onClick={triggerReminder}
             className="btn-ghost rounded-full px-3 py-2 text-[11px] flex items-center gap-1.5"
+            aria-label="Repeat now"
           >
-            <HelpCircle size={12} /> Why?
+            <Repeat size={12} /> Repeat now
           </button>
-          {step.kind === "install" && (
-            <button
-              onClick={() => setSheet("install")}
-              className="btn-ghost rounded-full px-3 py-2 text-[11px] flex items-center gap-1.5"
-            >
-              <Sparkles size={12} /> Qualities
-              {installedQualities.length > 0 && (
-                <span className="ml-1 px-1.5 rounded-full bg-amber-300/20 text-amber-100 text-[10px]">
-                  {installedQualities.length}
-                </span>
-              )}
-            </button>
-          )}
+          <button
+            onClick={() => setExtension((e) => e + 30)}
+            className="btn-ghost rounded-full px-3 py-2 text-[11px] flex items-center gap-1.5"
+            aria-label="Extend 30 seconds"
+          >
+            <RotateCcw size={12} /> +30s
+            {extension > 0 && (
+              <span className="ml-1 px-1.5 rounded-full bg-amber-300/20 text-amber-100 text-[10px]">
+                +{extension}
+              </span>
+            )}
+          </button>
+          <button
+            onClick={() => {
+              setScanPhase(stepIdx === 0 ? "before" : "after");
+              setSheet("scan");
+            }}
+            className="btn-ghost rounded-full px-3 py-2 text-[11px] flex items-center gap-1.5"
+            aria-label="Scan"
+          >
+            <ShieldCheck size={12} /> Scan
+          </button>
           <button
             onClick={() => setRunning((r) => !r)}
             className="btn-gold ml-auto rounded-full w-12 h-12 flex items-center justify-center"
@@ -1713,15 +2010,36 @@ function SessionTrainer({
           >
             {running ? <Pause size={18} /> : <Play size={18} />}
           </button>
+        </div>
+
+        {/* Secondary row */}
+        <div className="mt-2 flex items-center gap-2">
+          <button
+            onClick={() => setSheet("why")}
+            className="text-[11px] text-white/55 hover:text-white/90 px-1"
+          >
+            <HelpCircle size={11} className="inline -mt-0.5 mr-1" /> Why this step?
+          </button>
+          {step.kind === "install" && (
+            <button
+              onClick={() => setSheet("install")}
+              className="text-[11px] text-white/55 hover:text-white/90 px-1"
+            >
+              <Sparkles size={11} className="inline -mt-0.5 mr-1" /> Qualities
+              {installedQualities.length > 0 && (
+                <span className="ml-1 text-amber-200/90">({installedQualities.length})</span>
+              )}
+            </button>
+          )}
           <button
             onClick={() => {
               if (stepIdx < steps.length - 1) setStepIdx((i) => i + 1);
               else onComplete();
             }}
-            className="btn-ghost rounded-full px-3 py-2 text-[11px] flex items-center gap-1.5"
-            aria-label="Skip"
+            className="ml-auto text-[11px] text-white/45 hover:text-white/75 px-1"
+            aria-label="Skip step"
           >
-            <SkipForward size={12} /> Skip
+            Skip <SkipForward size={11} className="inline -mt-0.5 ml-1" />
           </button>
         </div>
       </div>
@@ -1757,6 +2075,66 @@ function SessionTrainer({
               className="btn-ghost w-full rounded-2xl py-2.5 mt-4 text-sm"
             >
               Close
+            </button>
+          </div>
+        </div>
+      )}
+      {sheet === "scan" && (
+        <div className="absolute left-0 right-0 bottom-0 z-50 anim-fade-up">
+          <div className="glass rounded-t-3xl border-t border-white/10 p-5 pb-[max(env(safe-area-inset-bottom),20px)]">
+            <div className="w-10 h-1 bg-white/15 rounded-full mx-auto mb-3" />
+            <div className="text-[10px] uppercase tracking-[0.22em] text-white/55 mb-1">
+              {scanPhase === "before" ? "Scan before" : "Scan after"}
+            </div>
+            <div className="text-white/95 text-[13px] leading-snug mb-3">
+              {scanPhase === "before"
+                ? "Pause for a moment. Notice the area or feeling before the protocol begins."
+                : "Pause and notice what changed. Compare gently to your scan before."}
+            </div>
+            <div className="flex gap-1.5 mb-3">
+              <button
+                onClick={() => setScanPhase("before")}
+                className={`px-3 py-1.5 rounded-full text-[11px] border transition ${scanPhase === "before" ? "bg-amber-300/15 border-amber-300/35 text-amber-100" : "bg-white/4 border-white/10 text-white/65"}`}
+              >Before</button>
+              <button
+                onClick={() => setScanPhase("after")}
+                className={`px-3 py-1.5 rounded-full text-[11px] border transition ${scanPhase === "after" ? "bg-amber-300/15 border-amber-300/35 text-amber-100" : "bg-white/4 border-white/10 text-white/65"}`}
+              >After</button>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {["heavy", "tight", "warm", "cool", "tingling", "calm", "light", "painful", "emotional", "no sensation"].map((s) => {
+                const list = scanPhase === "before" ? scanBefore : scanAfter;
+                const setList = scanPhase === "before" ? setScanBefore : setScanAfter;
+                const active = list.includes(s);
+                return (
+                  <button
+                    key={s}
+                    onClick={() => {
+                      if (active) setList(list.filter((x) => x !== s));
+                      else setList([...list, s]);
+                    }}
+                    className={`px-3 py-1.5 rounded-full text-[12px] border capitalize transition ${active ? "bg-amber-300/15 border-amber-300/35 text-amber-100" : "bg-white/4 border-white/10 text-white/70"}`}
+                  >
+                    {s}
+                  </button>
+                );
+              })}
+            </div>
+            {(scanBefore.length > 0 || scanAfter.length > 0) && (
+              <div className="mt-4 text-[11px] text-white/65 space-y-1">
+                {scanBefore.length > 0 && (
+                  <div><span className="text-white/45">Before ·</span> {scanBefore.join(", ")}</div>
+                )}
+                {scanAfter.length > 0 && (
+                  <div><span className="text-white/45">After ·</span> {scanAfter.join(", ")}</div>
+                )}
+              </div>
+            )}
+            <button
+              onClick={() => setSheet(null)}
+              className="btn-gold w-full rounded-2xl py-2.5 mt-4 text-sm font-medium"
+            >
+              Done
             </button>
           </div>
         </div>
