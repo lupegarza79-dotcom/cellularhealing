@@ -71,6 +71,7 @@ type MovementKind =
   | "expand";
 
 type StepKind =
+  | "anchor"
   | "disconnect"
   | "appreciation"
   | "lag"
@@ -81,9 +82,12 @@ type StepKind =
   | "install"
   | "integrate";
 
+type VisualMode = "hand-anchor" | "floating-cell" | "movement" | "completion";
+
 type Step = {
   id: string;
   kind: StepKind;
+  visualMode: VisualMode;
   title: string;
   purpose: string;
   instruction: string;
@@ -95,6 +99,8 @@ type Step = {
   duration: number; // seconds
   body: string; // body region for proxy label
   note?: string;
+  /** Optional explicit phrase to say (overrides default proxy statement). */
+  sayText?: string;
 };
 
 /* Hand + crystal asset URLs (transparent PNGs) */
@@ -135,34 +141,55 @@ const movementLabel: Record<MovementKind, string> = {
 };
 
 /* ----------------------------------------------------------------------------
-   PROTOCOL MATRIX
+   PROTOCOL MATRIX — V5 micro-step engine
+   Each step is short (10-15s). Hand-anchor visual is used for: anchor,
+   disconnect, appreciation, L.A.G., stabilize. Floating-cell for cleanse,
+   energize, blue-coat, install. Completion for integration.
    ---------------------------------------------------------------------------- */
 
-const baseDisconnect = (body: string, system: string): Step => ({
-  id: "disconnect",
+const anchorStep = (body: string, system: string): Step => ({
+  id: "anchor",
+  kind: "anchor",
+  visualMode: "hand-anchor",
+  title: "Anchor the proxy cell",
+  purpose: "Form the proxy cell and name what it represents.",
+  instruction: "Touch thumb to index finger. Say the proxy statement.",
+  shortAction: "Form the cell. Say the proxy statement.",
+  voice: "Form the proxy cell. Say the statement.",
+  color: "gold",
+  movement: "pulse",
+  duration: 10,
+  body,
+  sayText: `This cell represents all the cells of the ${system} of [name], wherever affected.`,
+});
+
+const disconnectStep = (body: string, target: string, duration = 15): Step => ({
+  id: `disconnect-${target.replace(/\s+/g, "-")}`,
   kind: "disconnect",
-  title: "Disconnect",
-  purpose: "Release energetic cords, projections, and stress that don't belong.",
-  instruction: `Hold the proxy cell. Say firmly: "Disconnect all unwanted and unauthorized connections to the ${system}. Cut now."`,
-  shortAction: "Sweep the crystal downward through the proxy cell.",
-  voice: `Disconnect all unwanted connections to the ${system}. Cut now.`,
+  visualMode: "hand-anchor",
+  title: `Disconnect — ${target}`,
+  purpose: "Release energetic cords and unwanted influence.",
+  instruction: `Say: "Disconnect all unwanted connections to the ${target}. Cut now."`,
+  shortAction: "Sweep crystal downward — cords dissolve.",
+  voice: `Disconnect unwanted connections to the ${target}. Cut now.`,
   color: "violet",
   movement: "sweep-down",
-  duration: 45,
+  duration,
   body,
 });
 
-const baseStabilize = (body: string): Step => ({
+const stabilizeStep = (body: string, duration = 15): Step => ({
   id: "stabilize",
   kind: "stabilize",
+  visualMode: "hand-anchor",
   title: "Stabilize with Gold",
   purpose: "Seal and stabilize after cleansing.",
-  instruction: "Hold the crystal steady. Visualize gold sunlight infusing the proxy cell.",
-  shortAction: "Hold steady — beam Gold into the proxy cell.",
-  voice: "Stabilize with gold. Allow the system to settle.",
+  instruction: "Hold the crystal steady. Project Gold into the cell.",
+  shortAction: "Hold steady — fill with Gold.",
+  voice: "Stabilize with Gold.",
   color: "gold",
   movement: "beam-in",
-  duration: 45,
+  duration,
   body,
 });
 
@@ -183,47 +210,45 @@ const PROTOCOLS: Protocol[] = [
       "Finish with Golden Sun Integration.",
     ],
     buildSteps: () => [
-      baseDisconnect("whole body", "whole body"),
-      {
-        id: "cleanse",
-        kind: "cleanse",
-        title: "Cleanse — Green + Violet",
-        purpose: "Sweep heaviness from every system of the body.",
-        instruction: "Move the crystal in gentle clockwise circles. Imagine Green + Violet light washing through the proxy cell. Exclude the eyes.",
-        shortAction: "Small clockwise circles around the proxy cell.",
-        voice: "Apply Green and Violet to the proxy cell. Exclude the eyes.",
-        color: "green-violet",
-        movement: "circle-cw",
-        duration: 90,
-        body: "whole body",
-        note: "Excludes the eyes — use the Eyes protocol for those.",
-      },
-      {
-        id: "energize",
-        kind: "energize",
-        title: "Energize — Gold",
-        purpose: "Restore every cell with golden light.",
-        instruction: "Hold the crystal steady. Project Gold light into the proxy cell.",
-        shortAction: "Hold steady — project Gold into the proxy cell.",
-        voice: "Energize with gold. Every cell receives golden restorative energy.",
-        color: "gold",
-        movement: "beam-in",
-        duration: 60,
-        body: "whole body",
-      },
-      {
-        id: "integrate",
-        kind: "integrate",
-        title: "Golden Sun Integration",
-        purpose: "Seal and shine like a golden sun.",
-        instruction: "Expand the gold light outward from the proxy cell. See yourself shining like the golden sun.",
-        shortAction: "Expand the Gold light outward in slow waves.",
-        voice: "See yourself shining like the golden sun. Allow the body to receive what it needs.",
-        color: "gold",
-        movement: "expand",
-        duration: 60,
-        body: "whole body",
-      },
+      anchorStep("whole body", "every single cell of the body"),
+      disconnectStep("whole body", "whole body"),
+      { id: "cleanse-gv", kind: "cleanse", visualMode: "floating-cell",
+        title: "Cleanse — Green + Violet", purpose: "Sweep heaviness from every system.",
+        instruction: "Gentle clockwise circles. Green + Violet wash through the cell.",
+        shortAction: "Clockwise circles — Green + Violet.",
+        voice: "Apply Green and Violet to the proxy cell.",
+        color: "green-violet", movement: "circle-cw", duration: 15, body: "whole body" },
+      { id: "cleanse-exclude", kind: "cleanse", visualMode: "hand-anchor",
+        title: "Exclude the eyes", purpose: "Eyes need their own protocol — keep them outside this sweep.",
+        instruction: "Briefly affirm: exclude the eyes from this Green + Violet sweep.",
+        shortAction: "Exclude the eyes from the sweep.",
+        voice: "Exclude the eyes from the Green and Violet sweep.",
+        color: "green-violet", movement: "pulse", duration: 8, body: "whole body",
+        note: "Use the Eyes protocol for the eyes — Electric Violet only." },
+      { id: "cleanse-continue", kind: "cleanse", visualMode: "floating-cell",
+        title: "Continue — scalp to soles", purpose: "Sweep across skin, bones, muscles, nerves, organs, systems.",
+        instruction: "Continue Green + Violet over scalp, skin, bones, organs.",
+        shortAction: "Continue Green + Violet through every system.",
+        voice: "Continue Green and Violet through every system.",
+        color: "green-violet", movement: "circle-cw", duration: 15, body: "whole body" },
+      { id: "energize-gold", kind: "energize", visualMode: "floating-cell",
+        title: "Energize — Gold", purpose: "Restore every cell with golden light.",
+        instruction: "Beam Gold steadily into the cell.",
+        shortAction: "Hold steady — beam Gold.",
+        voice: "Energize with Gold. Every cell receives golden restorative energy.",
+        color: "gold", movement: "beam-in", duration: 15, body: "whole body" },
+      { id: "integrate", kind: "integrate", visualMode: "completion",
+        title: "Golden Sun integration", purpose: "Seal and shine like a golden sun.",
+        instruction: "Expand the Gold light outward.",
+        shortAction: "Expand Gold outward — golden sun.",
+        voice: "See yourself shining like the golden sun.",
+        color: "gold", movement: "expand", duration: 15, body: "whole body" },
+      { id: "gratitude", kind: "appreciation", visualMode: "hand-anchor",
+        title: "Gratitude · So be it", purpose: "Close with appreciation.",
+        instruction: "Inwardly say: Thank you. So be it.",
+        shortAction: "Say inwardly: Thank you. So be it.",
+        voice: "Thank you. So be it. Stay blessed.",
+        color: "gold", movement: "pulse", duration: 10, body: "whole body" },
     ],
   },
   {
@@ -241,34 +266,21 @@ const PROTOCOLS: Protocol[] = [
       "Keep intensity gentle.",
     ],
     buildSteps: () => [
-      baseDisconnect("nervous system", "nervous system"),
-      {
-        id: "cleanse",
-        kind: "cleanse",
-        title: "Cleanse — Electric Violet",
-        purpose: "Clear heaviness from the nerves.",
-        instruction: "Tiny gentle pulses of Electric Violet into the proxy cell.",
-        shortAction: "Tiny soft Electric Violet pulses near the proxy cell.",
-        voice: "Apply Electric Violet to the proxy cell. Let the nervous system receive gently.",
-        color: "violet",
-        movement: "pulse",
-        duration: 60,
-        body: "nervous system",
-      },
-      {
-        id: "energize",
-        kind: "energize",
-        title: "Energize — Electric Violet",
-        purpose: "Restore nerve flow.",
-        instruction: "Hold the crystal steady. Beam Electric Violet softly.",
-        shortAction: "Hold steady — beam Electric Violet gently.",
-        voice: "Energize the nervous system with Electric Violet. Do not force.",
-        color: "violet",
-        movement: "beam-in",
-        duration: 60,
-        body: "nervous system",
-      },
-      baseStabilize("nervous system"),
+      anchorStep("nervous system", "nervous system"),
+      disconnectStep("nervous system", "nervous system"),
+      { id: "cleanse", kind: "cleanse", visualMode: "floating-cell",
+        title: "Cleanse — Electric Violet", purpose: "Clear heaviness from the nerves.",
+        instruction: "Tiny soft Electric Violet pulses.",
+        shortAction: "Tiny Electric Violet pulses.",
+        voice: "Apply Electric Violet gently.",
+        color: "violet", movement: "pulse", duration: 15, body: "nervous system" },
+      { id: "energize", kind: "energize", visualMode: "floating-cell",
+        title: "Energize — Electric Violet", purpose: "Restore nerve flow.",
+        instruction: "Hold steady. Beam Electric Violet.",
+        shortAction: "Hold steady — beam Electric Violet.",
+        voice: "Energize with Electric Violet. Do not force.",
+        color: "violet", movement: "beam-in", duration: 15, body: "nervous system" },
+      stabilizeStep("nervous system"),
     ],
   },
   {
@@ -285,59 +297,38 @@ const PROTOCOLS: Protocol[] = [
       "Stabilize with Gold.",
     ],
     buildSteps: () => [
-      {
-        id: "appreciation",
-        kind: "appreciation",
-        title: "Appreciation",
-        purpose: "Repair relationship with the body.",
-        instruction: "Place hands on heart. Thank the muscles for carrying you.",
-        shortAction: "Speak appreciation inwardly to the muscles.",
-        voice: "Thank you muscles and legs for carrying the body. I appreciate you.",
-        color: "gold",
-        movement: "pulse",
-        duration: 30,
-        body: "muscles",
-      },
-      {
-        id: "blue-coat",
-        kind: "blue-coat",
-        title: "Soothe Pain — Light Blue",
-        purpose: "Cool pain sensation energetically.",
-        instruction: "Sweep a soft Light Blue wave through the proxy cell.",
-        shortAction: "Sweep a cooling Light Blue wave downward.",
-        voice: "Apply Light Blue. Allow the muscles to cool and relax.",
-        color: "blue",
-        movement: "sweep-down",
-        duration: 45,
-        body: "muscles",
-      },
-      {
-        id: "cleanse",
-        kind: "cleanse",
-        title: "Cleanse — Green + Orange",
-        purpose: "Clear density from the muscles.",
-        instruction: "Alternate Green and Orange waves into the proxy cell.",
-        shortAction: "Alternate Green and Orange waves — one, then the other.",
-        voice: "Apply Green and Orange. Clear the heaviness.",
-        color: "orange",
-        movement: "alternate",
-        duration: 60,
-        body: "muscles",
-      },
-      {
-        id: "energize",
-        kind: "energize",
-        title: "Energize — Green + Orange",
-        purpose: "Restore strength and circulation.",
-        instruction: "Continue alternating colors, slightly slower now.",
-        shortAction: "Slower alternating Green and Orange waves.",
-        voice: "Energize the muscles. Allow strength to return.",
-        color: "green",
-        movement: "alternate",
-        duration: 45,
-        body: "muscles",
-      },
-      baseStabilize("muscles"),
+      anchorStep("muscles", "muscle cells affected by pain"),
+      { id: "appreciation", kind: "appreciation", visualMode: "hand-anchor",
+        title: "Appreciation", purpose: "Thank the muscles for carrying you.",
+        instruction: "Inwardly: Thank you muscles for carrying the body.",
+        shortAction: "Speak appreciation to the muscles.",
+        voice: "Thank you muscles and legs for carrying the body.",
+        color: "gold", movement: "pulse", duration: 10, body: "muscles" },
+      { id: "blue-coat", kind: "blue-coat", visualMode: "floating-cell",
+        title: "Soothe — Light Blue", purpose: "Cool pain energetically.",
+        instruction: "Sweep a soft Light Blue wave through the cell.",
+        shortAction: "Sweep cooling Light Blue downward.",
+        voice: "Apply Light Blue. Soothe the muscles.",
+        color: "blue", movement: "sweep-down", duration: 15, body: "muscles" },
+      { id: "cleanse-green", kind: "cleanse", visualMode: "floating-cell",
+        title: "Cleanse — Green", purpose: "Clear density.",
+        instruction: "Sweep Green through the proxy cell.",
+        shortAction: "Green clearing wave.",
+        voice: "Apply Green to the proxy cell.",
+        color: "green", movement: "sweep-down", duration: 15, body: "muscles" },
+      { id: "cleanse-orange", kind: "cleanse", visualMode: "floating-cell",
+        title: "Cleanse — Orange", purpose: "Clear deeper density.",
+        instruction: "Sweep Orange through the proxy cell.",
+        shortAction: "Orange clearing wave.",
+        voice: "Apply Orange to the proxy cell.",
+        color: "orange", movement: "sweep-down", duration: 15, body: "muscles" },
+      { id: "cleanse-alt", kind: "cleanse", visualMode: "floating-cell",
+        title: "Alternate — Green + Orange", purpose: "Restore strength and circulation.",
+        instruction: "Alternate Green and Orange waves.",
+        shortAction: "Alternate Green and Orange.",
+        voice: "Alternate Green and Orange.",
+        color: "orange", movement: "alternate", duration: 15, body: "muscles" },
+      stabilizeStep("muscles"),
     ],
   },
   {
@@ -354,46 +345,38 @@ const PROTOCOLS: Protocol[] = [
       "Energize with Gold + Electric Violet, stabilize with Gold.",
     ],
     buildSteps: () => [
-      {
-        id: "lag",
-        kind: "lag",
-        title: "L.A.G. — Love, Appreciation, Gratitude",
-        purpose: "Shift from criticism into cooperation with the heart.",
-        instruction: "Speak inwardly, line by line. Let the heart receive.",
-        shortAction: "Speak L.A.G. inwardly — one line at a time.",
-        voice: "Thank you, heart, for beating since the beginning of life. Thank you for circulating blood and oxygen. I am sorry for ignoring you. I appreciate you. I send love, appreciation, and gratitude to every cell.",
-        color: "rose-gold",
-        movement: "pulse",
-        duration: 90,
-        body: "heart",
-      },
-      {
-        id: "cleanse",
-        kind: "cleanse",
-        title: "Cleanse — Green + Violet",
-        purpose: "Release sadness, self-judgment, heaviness.",
-        instruction: "Circle Green + Violet gently around the proxy cell of the heart.",
-        shortAction: "Gentle clockwise circles — Green + Violet.",
-        voice: "Cleanse the heart with Green and Violet. Release sadness and self judgment.",
-        color: "green-violet",
-        movement: "circle-cw",
-        duration: 60,
-        body: "heart",
-      },
-      {
-        id: "energize",
-        kind: "energize",
-        title: "Energize — Gold + Electric Violet",
-        purpose: "Fill the heart and cardiovascular field with light.",
-        instruction: "Alternate Gold and Electric Violet beams into the proxy cell.",
-        shortAction: "Alternate Gold and Electric Violet beams.",
+      anchorStep("heart", "heart and cardiovascular system"),
+      { id: "lag-love", kind: "lag", visualMode: "hand-anchor",
+        title: "Love", purpose: "Open the heart with love.",
+        instruction: "Inwardly: Thank you, heart, for beating since the beginning of life.",
+        shortAction: "Send LOVE to the heart.",
+        voice: "Thank you, heart, for beating since the beginning of life.",
+        color: "rose-gold", movement: "pulse", duration: 15, body: "heart" },
+      { id: "lag-appreciation", kind: "appreciation", visualMode: "hand-anchor",
+        title: "Appreciation", purpose: "Appreciate the heart's work.",
+        instruction: "Inwardly: Thank you for moving blood and oxygen. I appreciate you.",
+        shortAction: "Send APPRECIATION to the heart.",
+        voice: "Thank you for circulating blood and oxygen. I appreciate you.",
+        color: "gold", movement: "pulse", duration: 15, body: "heart" },
+      { id: "lag-gratitude", kind: "lag", visualMode: "hand-anchor",
+        title: "Gratitude", purpose: "Send gratitude to every cell.",
+        instruction: "Inwardly: I send love, appreciation, and gratitude to every cell.",
+        shortAction: "Send GRATITUDE to every cell.",
+        voice: "I send love, appreciation, and gratitude to every cell.",
+        color: "gold", movement: "pulse", duration: 15, body: "heart" },
+      { id: "cleanse", kind: "cleanse", visualMode: "floating-cell",
+        title: "Cleanse — Green + Violet", purpose: "Release sadness and heaviness.",
+        instruction: "Circle Green + Violet gently around the cell.",
+        shortAction: "Clockwise circles — Green + Violet.",
+        voice: "Cleanse the heart with Green and Violet.",
+        color: "green-violet", movement: "circle-cw", duration: 15, body: "heart" },
+      { id: "energize", kind: "energize", visualMode: "floating-cell",
+        title: "Energize — Gold + Electric Violet", purpose: "Fill the heart with light.",
+        instruction: "Alternate Gold and Electric Violet.",
+        shortAction: "Alternate Gold and Electric Violet.",
         voice: "Energize the heart with Gold and Electric Violet.",
-        color: "gold",
-        movement: "alternate",
-        duration: 60,
-        body: "heart",
-      },
-      baseStabilize("heart"),
+        color: "gold", movement: "alternate", duration: 15, body: "heart" },
+      stabilizeStep("heart"),
     ],
   },
   {
@@ -410,47 +393,34 @@ const PROTOCOLS: Protocol[] = [
       "Stabilize with Gold.",
     ],
     buildSteps: () => [
-      baseDisconnect("digestive system", "digestive system"),
-      {
-        id: "blue-coat",
-        kind: "blue-coat",
-        title: "Light Blue Coating (Lower GI first)",
-        purpose: "Protective coating before deeper clearing.",
-        instruction: "Sweep Light Blue along the proxy cell, coating it gently.",
-        shortAction: "Coat the proxy cell with a soft Light Blue sweep.",
-        voice: "Apply Light Blue coating first. Protect before clearing.",
-        color: "blue",
-        movement: "sweep-down",
-        duration: 45,
-        body: "lower GI",
-      },
-      {
-        id: "cleanse",
-        kind: "cleanse",
-        title: "Cleanse — Green + Orange",
-        purpose: "Clear density from upper and lower GI.",
-        instruction: "Alternate Green and Orange into the proxy cell.",
-        shortAction: "Alternate Green and Orange waves.",
-        voice: "Apply Green and Orange. Clear the digestive system.",
-        color: "orange",
-        movement: "alternate",
-        duration: 75,
-        body: "digestive system",
-      },
-      {
-        id: "energize",
-        kind: "energize",
-        title: "Energize — Green + Orange",
-        purpose: "Restore digestive vitality.",
-        instruction: "Continue softer waves of Green and Orange.",
-        shortAction: "Softer alternating Green and Orange waves.",
-        voice: "Energize the digestive system. Allow restoration.",
-        color: "green",
-        movement: "alternate",
-        duration: 45,
-        body: "digestive system",
-      },
-      baseStabilize("digestive system"),
+      anchorStep("digestive system", "digestive system"),
+      disconnectStep("digestive system", "digestive system"),
+      { id: "blue-coat", kind: "blue-coat", visualMode: "floating-cell",
+        title: "Light Blue coating", purpose: "Protect lower GI before deeper clearing.",
+        instruction: "Coat the cell with soft Light Blue.",
+        shortAction: "Coat the cell with Light Blue.",
+        voice: "Apply Light Blue coating first.",
+        color: "blue", movement: "sweep-down", duration: 15, body: "digestive system",
+        note: "Lower GI: Light Blue first is mandatory before Green/Orange." },
+      { id: "cleanse-green", kind: "cleanse", visualMode: "floating-cell",
+        title: "Cleanse — Green", purpose: "Clear density.",
+        instruction: "Green wave through the cell.",
+        shortAction: "Green clearing wave.",
+        voice: "Apply Green.",
+        color: "green", movement: "sweep-down", duration: 15, body: "digestive system" },
+      { id: "cleanse-orange", kind: "cleanse", visualMode: "floating-cell",
+        title: "Cleanse — Orange", purpose: "Clear deeper density.",
+        instruction: "Orange wave through the cell.",
+        shortAction: "Orange clearing wave.",
+        voice: "Apply Orange.",
+        color: "orange", movement: "sweep-down", duration: 15, body: "digestive system" },
+      { id: "cleanse-alt", kind: "cleanse", visualMode: "floating-cell",
+        title: "Alternate — Green + Orange", purpose: "Continue clearing in alternation.",
+        instruction: "Alternate Green and Orange.",
+        shortAction: "Alternate Green and Orange.",
+        voice: "Alternate Green and Orange.",
+        color: "orange", movement: "alternate", duration: 15, body: "digestive system" },
+      stabilizeStep("digestive system"),
     ],
   },
   {
@@ -467,50 +437,41 @@ const PROTOCOLS: Protocol[] = [
       "Stabilize with Gold for vitality and strength.",
     ],
     buildSteps: () => [
-      {
-        ...baseDisconnect("kidneys", "kidneys, bladder, and urinary system"),
-        duration: 60,
-      },
-      {
-        id: "appreciation",
-        kind: "appreciation",
-        title: "Appreciation",
-        purpose: "Thank the kidneys for supporting vitality.",
-        instruction: "Place attention on the kidneys. Speak inwardly.",
-        shortAction: "Thank the kidneys inwardly. Soft gold pulses.",
+      anchorStep("kidneys", "urinary system and kidneys"),
+      disconnectStep("kidneys", "left kidney", 10),
+      disconnectStep("kidneys", "right kidney", 10),
+      disconnectStep("kidneys", "bladder", 10),
+      { id: "appreciation", kind: "appreciation", visualMode: "hand-anchor",
+        title: "Appreciation", purpose: "Thank the kidneys for vitality.",
+        instruction: "Inwardly: Thank you kidneys for supporting vitality.",
+        shortAction: "Thank the kidneys inwardly.",
         voice: "Thank you kidneys for supporting vitality and strength.",
-        color: "gold",
-        movement: "pulse",
-        duration: 30,
-        body: "kidneys",
-      },
-      {
-        id: "cleanse",
-        kind: "cleanse",
-        title: "Cleanse — Green + Orange",
-        purpose: "Clear density from the urinary system.",
-        instruction: "Alternate Green and Orange into the proxy cell.",
-        shortAction: "Alternate Green and Orange waves.",
-        voice: "Apply Green and Orange to the kidneys.",
-        color: "green",
-        movement: "alternate",
-        duration: 60,
-        body: "kidneys",
-      },
-      {
-        id: "energize",
-        kind: "energize",
-        title: "Regenerate — Gold",
-        purpose: "Restore strength and vitality.",
-        instruction: "Beam Gold steadily into the proxy cell.",
-        shortAction: "Hold steady — beam Gold into the proxy cell.",
-        voice: "Regenerate the kidneys with gold.",
-        color: "gold",
-        movement: "beam-in",
-        duration: 60,
-        body: "kidneys",
-      },
-      baseStabilize("kidneys"),
+        color: "gold", movement: "pulse", duration: 10, body: "kidneys" },
+      { id: "cleanse-green", kind: "cleanse", visualMode: "floating-cell",
+        title: "Cleanse — Green", purpose: "Clear density.",
+        instruction: "Green wave through the cell.",
+        shortAction: "Green clearing wave.",
+        voice: "Apply Green to the kidneys.",
+        color: "green", movement: "sweep-down", duration: 15, body: "kidneys" },
+      { id: "cleanse-orange", kind: "cleanse", visualMode: "floating-cell",
+        title: "Cleanse — Orange", purpose: "Clear deeper density.",
+        instruction: "Orange wave through the cell.",
+        shortAction: "Orange clearing wave.",
+        voice: "Apply Orange.",
+        color: "orange", movement: "sweep-down", duration: 15, body: "kidneys" },
+      { id: "cleanse-alt", kind: "cleanse", visualMode: "floating-cell",
+        title: "Alternate — Green + Orange", purpose: "Continue clearing.",
+        instruction: "Alternate Green and Orange.",
+        shortAction: "Alternate Green and Orange.",
+        voice: "Alternate Green and Orange.",
+        color: "orange", movement: "alternate", duration: 15, body: "kidneys" },
+      { id: "regenerate", kind: "energize", visualMode: "floating-cell",
+        title: "Regenerate — Gold", purpose: "Restore strength and vitality.",
+        instruction: "Beam Gold steadily.",
+        shortAction: "Hold steady — beam Gold.",
+        voice: "Regenerate the kidneys with Gold.",
+        color: "gold", movement: "beam-in", duration: 15, body: "kidneys" },
+      stabilizeStep("kidneys"),
     ],
   },
   {
@@ -528,33 +489,27 @@ const PROTOCOLS: Protocol[] = [
       "Stabilize with Gold.",
     ],
     buildSteps: () => [
-      {
-        id: "cleanse",
-        kind: "cleanse",
-        title: "Gentle Cleanse — Greenish Gold",
-        purpose: "Balance both hemispheres softly.",
-        instruction: "Tiny soft pulses of Greenish Gold into the proxy cell.",
-        shortAction: "Tiny soft Greenish Gold pulses.",
-        voice: "Apply Greenish Gold gently. Balance right and left hemispheres.",
-        color: "greenish-gold",
-        movement: "pulse",
-        duration: 60,
-        body: "brain",
-      },
-      {
-        id: "energize",
-        kind: "energize",
-        title: "Energize — Greenish Gold",
-        purpose: "Allow the brain to receive softly.",
-        instruction: "Hold the crystal steady. Beam Greenish Gold.",
-        shortAction: "Hold steady — beam Greenish Gold softly.",
+      anchorStep("brain", "brain, both hemispheres"),
+      { id: "balance", kind: "cleanse", visualMode: "hand-anchor",
+        title: "Balance hemispheres", purpose: "Soften and balance left and right.",
+        instruction: "Soft Greenish Gold pulses — gentle only.",
+        shortAction: "Balance right and left — soft pulses.",
+        voice: "Balance right and left hemispheres.",
+        color: "greenish-gold", movement: "pulse", duration: 15, body: "brain",
+        note: "Gentle only. Do not overdo." },
+      { id: "cleanse", kind: "cleanse", visualMode: "floating-cell",
+        title: "Cleanse — Greenish Gold", purpose: "Soft clearing.",
+        instruction: "Tiny Greenish Gold pulses into the cell.",
+        shortAction: "Tiny Greenish Gold pulses.",
+        voice: "Apply Greenish Gold gently.",
+        color: "greenish-gold", movement: "pulse", duration: 15, body: "brain" },
+      { id: "energize", kind: "energize", visualMode: "floating-cell",
+        title: "Energize — Greenish Gold", purpose: "Allow the brain to receive softly.",
+        instruction: "Hold steady. Beam Greenish Gold.",
+        shortAction: "Hold steady — beam Greenish Gold.",
         voice: "Allow the brain to receive softly.",
-        color: "greenish-gold",
-        movement: "beam-in",
-        duration: 45,
-        body: "brain",
-      },
-      baseStabilize("brain"),
+        color: "greenish-gold", movement: "beam-in", duration: 15, body: "brain" },
+      stabilizeStep("brain"),
     ],
   },
   {
@@ -572,33 +527,27 @@ const PROTOCOLS: Protocol[] = [
       "Use very gentle, low intensity, short duration.",
     ],
     buildSteps: () => [
-      { ...baseDisconnect("eyes", "both eyes"), duration: 30 },
-      {
-        id: "cleanse",
-        kind: "cleanse",
-        title: "Gentle Cleanse — Electric Violet",
-        purpose: "Soft clearing for the eyes.",
-        instruction: "Tiny violet pulses. Both eyes together. Do not strain.",
-        shortAction: "Tiny Electric Violet pulses — do not strain.",
+      anchorStep("eyes", "both eyes"),
+      disconnectStep("eyes", "both eyes", 10),
+      { id: "cleanse", kind: "cleanse", visualMode: "floating-cell",
+        title: "Gentle Cleanse — Electric Violet", purpose: "Soft clearing for the eyes.",
+        instruction: "Tiny violet pulses. Both eyes together.",
+        shortAction: "Tiny Electric Violet pulses.",
         voice: "Apply Electric Violet only. Gentle, loving, soft.",
-        color: "violet",
-        movement: "pulse",
-        duration: 30,
-        body: "eyes",
-      },
-      {
-        id: "energize",
-        kind: "energize",
-        title: "Energize — Electric Violet",
-        purpose: "Restore softly.",
-        instruction: "Continue soft pulses. Short.",
-        shortAction: "Continue soft violet pulses — keep it short.",
+        color: "violet", movement: "pulse", duration: 12, body: "eyes",
+        note: "Electric Violet ONLY. No Green or Orange. Do not strain." },
+      { id: "energize", kind: "energize", visualMode: "floating-cell",
+        title: "Energize — Electric Violet", purpose: "Restore softly.",
+        instruction: "Continue soft pulses. Keep short.",
+        shortAction: "Continue soft violet pulses.",
         voice: "Energize the eyes. Stop before overdoing.",
-        color: "violet",
-        movement: "pulse",
-        duration: 30,
-        body: "eyes",
-      },
+        color: "violet", movement: "pulse", duration: 12, body: "eyes" },
+      { id: "rest", kind: "stabilize", visualMode: "hand-anchor",
+        title: "Rest", purpose: "Allow the eyes to settle.",
+        instruction: "Soften. Stop. Let the eyes rest.",
+        shortAction: "Soften and rest.",
+        voice: "Let the eyes rest now.",
+        color: "violet", movement: "pulse", duration: 10, body: "eyes" },
     ],
   },
   {
@@ -614,20 +563,20 @@ const PROTOCOLS: Protocol[] = [
       "Continue with the relevant system protocol if needed.",
     ],
     buildSteps: () => [
-      {
-        id: "blue-coat",
-        kind: "blue-coat",
-        title: "Soothe — Light Blue",
-        purpose: "Cool the affected cells.",
-        instruction: "Sweep Light Blue through the proxy cell.",
-        shortAction: "Sweep a soothing Light Blue wave through the cell.",
+      anchorStep("affected area", "all cells affected by pain"),
+      { id: "blue-coat", kind: "blue-coat", visualMode: "floating-cell",
+        title: "Cooling — Light Blue", purpose: "Cool the affected cells.",
+        instruction: "Sweep Light Blue through the cell.",
+        shortAction: "Soothing Light Blue wave.",
         voice: "Apply Light Blue. Soothe and cool the pain.",
-        color: "blue",
-        movement: "sweep-down",
-        duration: 90,
-        body: "affected area",
-      },
-      baseStabilize("affected area"),
+        color: "blue", movement: "sweep-down", duration: 15, body: "affected area" },
+      { id: "hold-blue", kind: "energize", visualMode: "floating-cell",
+        title: "Hold — Light Blue", purpose: "Let the area relax.",
+        instruction: "Hold steady. Allow the Blue to settle in.",
+        shortAction: "Hold steady — let Blue settle in.",
+        voice: "Hold Light Blue. Allow the area to relax.",
+        color: "blue", movement: "beam-in", duration: 15, body: "affected area" },
+      stabilizeStep("affected area"),
     ],
   },
   {
@@ -645,34 +594,45 @@ const PROTOCOLS: Protocol[] = [
       "Stabilize with Gold.",
     ],
     buildSteps: () => [
-      baseDisconnect("emotional body", "emotional body"),
-      {
-        id: "cleanse",
-        kind: "cleanse",
-        title: "Cleanse — Electric Violet",
-        purpose: "Remove sadness, fear, anger, inertia, stress.",
-        instruction: "Sweep Electric Violet through the proxy cell.",
-        shortAction: "Sweep Electric Violet downward through the cell.",
+      anchorStep("emotional body", "every cell of the body"),
+      disconnectStep("emotional body", "emotional body"),
+      { id: "cleanse", kind: "cleanse", visualMode: "floating-cell",
+        title: "Cleanse — Electric Violet", purpose: "Remove sadness, fear, anger, inertia, stress.",
+        instruction: "Sweep Electric Violet through the cell.",
+        shortAction: "Sweep Electric Violet downward.",
         voice: "Remove what no longer serves. Apply Electric Violet.",
-        color: "violet",
-        movement: "sweep-down",
-        duration: 75,
-        body: "emotional body",
-      },
-      {
-        id: "install",
-        kind: "install",
-        title: "Install Qualities — Gold",
-        purpose: "Fill the system with positive qualities.",
-        instruction: "Choose qualities, then beam Gold into the proxy cell carrying those qualities.",
-        shortAction: "Beam Gold carrying your chosen qualities into the cell.",
-        voice: "Install what supports the soul and body. Fill the system with positive qualities.",
-        color: "gold",
-        movement: "beam-in",
-        duration: 60,
-        body: "emotional body",
-      },
-      baseStabilize("emotional body"),
+        color: "violet", movement: "sweep-down", duration: 15, body: "emotional body" },
+      { id: "release", kind: "cleanse", visualMode: "floating-cell",
+        title: "Release patterns", purpose: "Release sadness, fear, anger, self-sabotage.",
+        instruction: "Inwardly: release what no longer serves.",
+        shortAction: "Release patterns — let them go.",
+        voice: "Release sadness, fear, anger, self sabotage. Let them go.",
+        color: "violet", movement: "sweep-down", duration: 15, body: "emotional body" },
+      { id: "install-peace", kind: "install", visualMode: "floating-cell",
+        title: "Install — Peace", purpose: "Fill with peace.",
+        instruction: "Beam Gold carrying Peace into the cell.",
+        shortAction: "Install PEACE — Gold beam.",
+        voice: "Install peace into every cell.",
+        color: "gold", movement: "beam-in", duration: 10, body: "emotional body" },
+      { id: "install-love", kind: "install", visualMode: "floating-cell",
+        title: "Install — Love", purpose: "Fill with love.",
+        instruction: "Beam Gold carrying Love into the cell.",
+        shortAction: "Install LOVE — Gold beam.",
+        voice: "Install love into every cell.",
+        color: "gold", movement: "beam-in", duration: 10, body: "emotional body" },
+      { id: "install-joy", kind: "install", visualMode: "floating-cell",
+        title: "Install — Joy", purpose: "Fill with joy.",
+        instruction: "Beam Gold carrying Joy into the cell.",
+        shortAction: "Install JOY — Gold beam.",
+        voice: "Install joy into every cell.",
+        color: "gold", movement: "beam-in", duration: 10, body: "emotional body" },
+      { id: "install-chosen", kind: "install", visualMode: "floating-cell",
+        title: "Install — your qualities", purpose: "Add the qualities you chose.",
+        instruction: "Beam Gold carrying your chosen qualities.",
+        shortAction: "Install your chosen qualities.",
+        voice: "Install your chosen qualities.",
+        color: "gold", movement: "beam-in", duration: 12, body: "emotional body" },
+      stabilizeStep("emotional body"),
     ],
   },
 ];
@@ -1791,6 +1751,128 @@ function ProxyCellVisual({
 }
 
 /* ----------------------------------------------------------------------------
+   FLOATING CELL VISUAL — used between hand-anchor moments
+   ---------------------------------------------------------------------------- */
+
+function FloatingCellVisual({
+  color,
+  movement,
+  intensity = 1,
+}: {
+  color: ColorTone;
+  movement: MovementKind;
+  intensity?: number;
+}) {
+  const c = colorMap[color];
+  const motionClass =
+    movement === "sweep-down"
+      ? "fc-sweep"
+      : movement === "circle-cw"
+      ? "fc-orbit"
+      : movement === "pulse"
+      ? "fc-pulse"
+      : movement === "alternate"
+      ? "fc-alternate"
+      : movement === "expand"
+      ? "fc-expand"
+      : "fc-beam";
+
+  return (
+    <div className="relative w-full h-full flex items-center justify-center select-none">
+      <div className="relative" style={{ width: "min(70%, 360px)", aspectRatio: "1 / 1" }}>
+        {/* outer halo */}
+        <div
+          className="absolute inset-[-25%] rounded-full pointer-events-none"
+          style={{
+            background: `radial-gradient(circle, ${c.ring} 0%, transparent 65%)`,
+            opacity: 0.55 * intensity,
+            filter: "blur(28px)",
+          }}
+        />
+        {/* movement guide ring */}
+        {movement === "circle-cw" && (
+          <div
+            className="absolute inset-[6%] rounded-full border path-circle"
+            style={{ borderColor: c.from, opacity: 0.55, borderWidth: 1 }}
+          />
+        )}
+        {movement === "sweep-down" && (
+          <div
+            className="absolute left-1/2 -translate-x-1/2 path-sweep"
+            style={{
+              top: "-10%",
+              width: 2,
+              height: "120%",
+              background: `linear-gradient(180deg, transparent, ${c.from}, transparent)`,
+              opacity: 0.7,
+            }}
+          />
+        )}
+        {(movement === "pulse" || movement === "expand") && (
+          <>
+            <div
+              className="absolute inset-0 rounded-full path-pulse-ring"
+              style={{ border: `1px solid ${c.from}`, opacity: 0.6 }}
+            />
+            <div
+              className="absolute inset-[10%] rounded-full path-pulse-ring"
+              style={{ border: `1px solid ${c.to}`, opacity: 0.45, animationDelay: "0.6s" }}
+            />
+          </>
+        )}
+        {movement === "alternate" && (
+          <div
+            className="absolute top-1/2 left-0 right-0 -translate-y-1/2 path-alt"
+            style={{
+              height: 2,
+              background: `linear-gradient(90deg, ${c.from}, transparent, ${c.to})`,
+              opacity: 0.7,
+            }}
+          />
+        )}
+
+        {/* the proxy cell orb */}
+        <div
+          className={`absolute inset-[20%] rounded-full cell-glow ${motionClass}`}
+          style={{
+            ["--cell-glow" as never]: c.ring,
+            background: `radial-gradient(circle, #ffffff 0%, ${c.from} 30%, ${c.to} 70%, transparent 100%)`,
+            boxShadow: `0 0 36px ${c.ring}, inset 0 0 22px rgba(255,255,255,0.55)`,
+          } as React.CSSProperties}
+        />
+        {intensity > 1.2 && (
+          <div
+            className="reminder-ring absolute inset-[20%] rounded-full"
+            style={{ border: `2px solid ${c.from}` }}
+          />
+        )}
+        {/* tiny floating particles for cinematic feel */}
+        <div className="absolute inset-0 pointer-events-none">
+          {[0, 1, 2, 3, 4].map((i) => (
+            <span
+              key={i}
+              className="fc-particle absolute rounded-full"
+              style={{
+                left: `${20 + i * 14}%`,
+                top: `${30 + (i % 2) * 30}%`,
+                width: 4,
+                height: 4,
+                background: c.from,
+                boxShadow: `0 0 8px ${c.from}`,
+                animationDelay: `${i * 0.4}s`,
+              }}
+            />
+          ))}
+        </div>
+        <div className="absolute -bottom-6 left-0 right-0 text-center text-[10px] uppercase tracking-[0.22em] text-white/45">
+          proxy cell · {c.label}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ----------------------------------------------------------------------------
    SESSION TRAINER
    ---------------------------------------------------------------------------- */
 
@@ -1956,15 +2038,24 @@ function SessionTrainer({
         </div>
       </div>
 
-      {/* CENTER (≈70%) — hand + proxy cell + crystal */}
+      {/* CENTER (≈70%) — hand-anchor or floating-cell, swapped by visualMode */}
       <div className="relative flex-1 min-h-0 flex items-center justify-center px-4">
         <div className="relative w-full h-full max-h-[62vh] flex items-center justify-center">
-          <ProxyCellVisual
-            color={step.color}
-            movement={step.movement}
-            showCrystal={true}
-            intensity={reminderPulse ? 1.5 : 1}
-          />
+          {(reminderPulse || step.visualMode === "hand-anchor") ? (
+            <ProxyCellVisual
+              color={step.color}
+              movement={step.movement}
+              showCrystal={true}
+              intensity={reminderPulse ? 1.5 : 1}
+              showLabels={step.kind === "anchor" || reminderPulse}
+            />
+          ) : (
+            <FloatingCellVisual
+              color={step.color}
+              movement={step.movement}
+              intensity={1}
+            />
+          )}
 
           {/* Color + movement pills, anchored top-left */}
           <div className="absolute top-1 left-1 flex flex-col gap-1.5">
@@ -2018,7 +2109,7 @@ function SessionTrainer({
             </button>
           </div>
           <div className="text-white/95 text-[13px] mt-1 leading-snug">
-            “{proxyStatement}”
+            “{step.sayText ? step.sayText.replace("[name]", recipientName) : proxyStatement}”
           </div>
         </div>
 
