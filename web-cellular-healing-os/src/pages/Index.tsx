@@ -1239,27 +1239,23 @@ function HandCrystalTutorial({
   const steps = [
     {
       title: "Form the proxy cell",
-      sub: "Touch thumb to index finger — a small circle.",
-      detail: "This little circle represents one cell. Hold it gently in front of you.",
-      visual: <ProxyCellVisual color="gold" movement="pulse" showCrystal={false} />,
+      sub: "Make the circle with thumb + index.",
+      visual: <ProxyCellVisual color="gold" movement="pulse" showCrystal={false} showLabels={true} />,
     },
     {
-      title: "Name the cell",
-      sub: `Speak aloud or inwardly.`,
-      detail: `"This cell represents all the cells of the ${protocol.systemPhrase} of ${recipientName}, wherever affected."`,
-      visual: <ProxyCellVisual color="gold" movement="pulse" showCrystal={false} label="proxy cell" />,
+      title: "Center the cell",
+      sub: "The whole circle is the cell.",
+      visual: <ProxyCellVisual color="gold" movement="pulse" showCrystal={false} showLabels={false} intensity={1.3} />,
     },
     {
-      title: "Bring the crystal close",
-      sub: "Crystal tip near the finger circle.",
-      detail: "Keep the crystal close, steady, and gentle. If you don't have a crystal, use your fingertip with the same intention.",
-      visual: <ProxyCellVisual color={protocol.primaryColors[0]} movement="beam-in" showCrystal={true} />,
+      title: "Bring crystal close",
+      sub: "Point the crystal to the center.",
+      visual: <ProxyCellVisual color={protocol.primaryColors[0]} movement="beam-in" showCrystal={true} showLabels={true} />,
     },
     {
-      title: "Apply color & follow movement",
-      sub: "The screen will guide each step.",
-      detail: "Every 30 seconds you'll be reminded to repeat the proxy statement.",
-      visual: <ProxyCellVisual color={protocol.primaryColors[0]} movement="circle-cw" showCrystal={true} />,
+      title: "Say the statement",
+      sub: `This cell represents all cells of the ${protocol.systemPhrase} of ${recipientName}.`,
+      visual: <ProxyCellVisual color={protocol.primaryColors[0]} movement="pulse" showCrystal={true} showLabels={false} intensity={1.4} />,
     },
   ];
   const current = steps[step];
@@ -1284,7 +1280,7 @@ function HandCrystalTutorial({
           </div>
         </div>
 
-        <div className="h-56 flex items-center justify-center">
+        <div className="h-[420px] md:h-[520px] flex items-center justify-center overflow-hidden rounded-2xl">
           {current.visual}
         </div>
 
@@ -1292,8 +1288,7 @@ function HandCrystalTutorial({
           <div className="text-[11px] uppercase tracking-[0.18em] text-white/55">
             Step {step + 1} · {current.title}
           </div>
-          <div className="text-white/85 text-sm mt-1.5">{current.sub}</div>
-          <div className="text-white/55 text-[12px] mt-2 leading-relaxed">{current.detail}</div>
+          <div className="text-white/90 text-sm mt-1.5">{current.sub}</div>
         </div>
       </div>
 
@@ -1377,10 +1372,15 @@ function ProxyCellVisual({
   const uid = color; // unique-ish suffix for gradient ids
 
   return (
-    <div className="relative w-full h-full flex items-center justify-center select-none">
+    <div className="relative w-full h-full flex items-center justify-center select-none overflow-hidden">
       <div
         className="relative"
-        style={{ aspectRatio: "768 / 1207", height: "100%", maxWidth: "100%" }}
+        style={{
+          aspectRatio: "768 / 1207",
+          height: "128%",
+          maxWidth: "none",
+          transform: "translateY(6%)",
+        }}
       >
         {/* outer cinematic aura centered on the proxy cell */}
         <div
@@ -2040,7 +2040,7 @@ function SessionTrainer({
 
       {/* CENTER (≈70%) — hand-anchor or floating-cell, swapped by visualMode */}
       <div className="relative flex-1 min-h-0 flex items-center justify-center px-4">
-        <div className="relative w-full h-full max-h-[62vh] flex items-center justify-center">
+        <div className="relative w-full h-full max-h-[68vh] min-h-[420px] flex items-center justify-center">
           {(reminderPulse || step.visualMode === "hand-anchor") ? (
             <ProxyCellVisual
               color={step.color}
@@ -2109,7 +2109,11 @@ function SessionTrainer({
             </button>
           </div>
           <div className="text-white/95 text-[13px] mt-1 leading-snug">
-            “{step.sayText ? step.sayText.replace("[name]", recipientName) : proxyStatement}”
+            “{step.sayText
+              ? step.sayText
+                  .replace("[name]", recipientName)
+                  .replace("[system]", protocol.systemPhrase)
+              : proxyStatement}”
           </div>
         </div>
 
